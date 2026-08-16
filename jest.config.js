@@ -1,4 +1,6 @@
 /** @type {import('jest').Config} */
+const testPathIgnorePatterns = ['/node_modules/', '/.claude/'];
+
 module.exports = {
   projects: [
     {
@@ -6,12 +8,14 @@ module.exports = {
       preset: 'ts-jest',
       testEnvironment: 'node',
       testMatch: ['**/__tests__/firebase/**/*.test.ts', '**/__tests__/lib/**/*.test.ts'],
+      testPathIgnorePatterns,
       setupFilesAfterEnv: ['<rootDir>/jest.setup.env.js'],
     },
     {
       displayName: 'native',
       preset: 'jest-expo',
       testMatch: ['**/__tests__/**/*.test.tsx'],
+      testPathIgnorePatterns,
       setupFilesAfterEnv: ['<rootDir>/jest.setup.native.js'],
       moduleNameMapper: {
         // Use the package's official in-memory Jest mock instead of the real

@@ -1,0 +1,24 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(resource) {
+      return request.auth != null && request.auth.uid == resource.data.createdBy;
+    }
+    function isOwnerOnCreate() {
+      return request.auth != null && request.auth.uid == request.resource.data.createdBy;
+    }
+
+    match /registryItems/{itemId} {
+      allow create: if isOwnerOnCreate();
+      allow read, update, delete: if isOwner(resource);
+    }
+    match /observations/{obsId} {
+      allow create: if isOwnerOnCreate();
+      allow read, update, delete: if isOwner(resource);
+    }
+    match /alertDismissals/{dismissalId} {
+      allow create: if isOwnerOnCreate();
+      allow read, update, delete: if isOwner(resource);
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "name": "phase1-registry-app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:rules": "firebase emulators:exec --only firestore \"jest __tests__/firebase/rules.test.ts\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.1",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26.2.0",
+    "firebase-tools": "^15.27.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.12",
+    "typescript": "^6.0.3"
+  },
+  "dependencies": {
+    "firebase": "^12.17.1"
+  }
+}

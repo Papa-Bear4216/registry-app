@@ -1,6 +1,6 @@
 import { initializeTestEnvironment, RulesTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
 import { readFileSync } from 'fs';
-import { doc, setDoc, getDoc, setLogLevel } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, setLogLevel } from 'firebase/firestore';
 
 let testEnv: RulesTestEnvironment;
 
@@ -36,4 +36,12 @@ test('non-owner cannot read another user\'s registryItem', async () => {
 test('unauthenticated user cannot create a registryItem', async () => {
   const anon = testEnv.unauthenticatedContext().firestore();
   await assertFails(setDoc(doc(anon, 'registryItems/item1'), { name: 'Netflix', createdBy: 'ghost' }));
+});
+
+test('owner cannot change createdBy on update', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'registryItems/item1'), { name: 'Netflix', createdBy: 'alice' });
+  });
+  await assertFails(updateDoc(doc(alice, 'registryItems/item1'), { createdBy: 'bob' }));
 });

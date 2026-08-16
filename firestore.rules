@@ -10,15 +10,18 @@ service cloud.firestore {
 
     match /registryItems/{itemId} {
       allow create: if isOwnerOnCreate();
-      allow read, update, delete: if isOwner(resource);
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
     }
     match /observations/{obsId} {
       allow create: if isOwnerOnCreate();
-      allow read, update, delete: if isOwner(resource);
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
     }
     match /alertDismissals/{dismissalId} {
       allow create: if isOwnerOnCreate();
-      allow read, update, delete: if isOwner(resource);
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
     }
   }
 }

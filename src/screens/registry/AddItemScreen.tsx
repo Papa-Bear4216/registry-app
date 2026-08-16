@@ -4,7 +4,7 @@ import { addDoc } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { initializeFirebaseApp } from '../../firebase/config';
 import { registryItemsRef } from '../../firebase/firestore';
-import { ItemKind, ItemStatus, BillingCycle } from '../../types/enums';
+import { ItemKind, ItemStatus, BillingCycle, TaskCategory } from '../../types/enums';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 
@@ -56,7 +56,14 @@ export function AddItemScreen({ navigation }: Props) {
   const [cost, setCost] = useState('');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(BillingCycle.Monthly);
   const [kind, setKind] = useState<ItemKind>(ItemKind.Subscription);
+  const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
   const [description, setDescription] = useState('');
+
+  const toggleTaskCategory = (value: TaskCategory) => {
+    setTaskCategories((prev) =>
+      prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]
+    );
+  };
 
   const handleSave = async () => {
     if (!user) return;
@@ -67,7 +74,7 @@ export function AddItemScreen({ navigation }: Props) {
       billingCycle,
       kind,
       status: ItemStatus.Keep,
-      taskCategories: [],
+      taskCategories,
       description,
       canonicalIdentity: null,
       justified: false,
@@ -110,6 +117,20 @@ export function AddItemScreen({ navigation }: Props) {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
         {Object.values(ItemKind).map((k) => (
           <SelectChip key={k} label={k} value={k} selected={kind === k} onPress={setKind} testID={`kind-${k}`} />
+        ))}
+      </View>
+
+      <Text style={{ marginBottom: 4 }}>Task categories</Text>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 8 }}>
+        {Object.values(TaskCategory).map((c) => (
+          <SelectChip
+            key={c}
+            label={c}
+            value={c}
+            selected={taskCategories.includes(c)}
+            onPress={toggleTaskCategory}
+            testID={`task-category-${c}`}
+          />
         ))}
       </View>
 

@@ -41,8 +41,6 @@ const fixtures: RegistryItem[] = [
   item({ name: 'OneTime', cost: 500, billingCycle: BillingCycle.OneTime, status: ItemStatus.Cut }),
 ];
 
-const navigation = { navigate: jest.fn() } as any;
-
 beforeEach(() => {
   jest.clearAllMocks();
   mockUseAuth.mockReturnValue({ user: { uid: 'alice' }, loading: false });
@@ -50,25 +48,25 @@ beforeEach(() => {
 });
 
 test('sums monthly-equivalent cost across mixed billing cycles (monthly + annual + one-time)', async () => {
-  const { findByText } = await render(<HomeScreen navigation={navigation} route={{} as any} />);
+  const { findByText } = await render(<HomeScreen />);
   // $10/mo (monthly) + $10/mo (120 annual / 12) + $0/mo (one-time) = $20/mo
   expect(await findByText(/\$20\.00\/mo/)).toBeTruthy();
 });
 
 test('counts items by status', async () => {
-  const { findByText } = await render(<HomeScreen navigation={navigation} route={{} as any} />);
+  const { findByText } = await render(<HomeScreen />);
   expect(await findByText(/Keep: 1/)).toBeTruthy();
   expect(await findByText(/Review: 1/)).toBeTruthy();
   expect(await findByText(/Cut: 1/)).toBeTruthy();
 });
 
 test('displays total item count', async () => {
-  const { findByText } = await render(<HomeScreen navigation={navigation} route={{} as any} />);
+  const { findByText } = await render(<HomeScreen />);
   expect(await findByText(/3 items tracked/)).toBeTruthy();
 });
 
 test('shows loading text while items are loading', async () => {
   mockUseRegistryItems.mockReturnValue({ items: [], loading: true });
-  const { findByText } = await render(<HomeScreen navigation={navigation} route={{} as any} />);
+  const { findByText } = await render(<HomeScreen />);
   expect(await findByText('Loading…')).toBeTruthy();
 });

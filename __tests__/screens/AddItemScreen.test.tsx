@@ -14,7 +14,7 @@
 // useRegistryItems.emulator.test.ts note).
 import { render, fireEvent } from '@testing-library/react-native';
 import { AddItemScreen } from '../../src/screens/registry/AddItemScreen';
-import { BillingCycle, ItemKind } from '../../src/types/enums';
+import { BillingCycle, ItemKind, TaskCategory } from '../../src/types/enums';
 
 const mockUseAuth = jest.fn();
 const mockAddDoc = jest.fn();
@@ -84,6 +84,33 @@ test('pressing Save calls addDoc with createdBy set and navigates back', async (
     expect.objectContaining({ name: 'Notion', cost: 10, createdBy: 'alice' })
   );
   expect(navigation.goBack).toHaveBeenCalled();
+});
+
+test('selecting task category chips toggles them and Save writes the selected categories', async () => {
+  const { getByPlaceholderText, getByText, getByTestId } = await render(
+    <AddItemScreen navigation={navigation} route={{} as any} />
+  );
+
+  // Default: no task categories selected.
+  expect(getByTestId(`task-category-${TaskCategory.Coding}`).props.style.backgroundColor).toBe('#E5E7EB');
+
+  await fireEvent.press(getByTestId(`task-category-${TaskCategory.Coding}`));
+  await fireEvent.press(getByTestId(`task-category-${TaskCategory.Writing}`));
+  expect(getByTestId(`task-category-${TaskCategory.Coding}`).props.style.backgroundColor).toBe('#2563EB');
+  expect(getByTestId(`task-category-${TaskCategory.Writing}`).props.style.backgroundColor).toBe('#2563EB');
+
+  // Toggling Coding back off should remove it while Writing stays selected.
+  await fireEvent.press(getByTestId(`task-category-${TaskCategory.Coding}`));
+  expect(getByTestId(`task-category-${TaskCategory.Coding}`).props.style.backgroundColor).toBe('#E5E7EB');
+
+  await fireEvent.changeText(getByPlaceholderText('Name'), 'Notion');
+  await fireEvent.changeText(getByPlaceholderText('Cost'), '10');
+  await fireEvent.press(getByText('Save'));
+
+  expect(mockAddDoc).toHaveBeenCalledWith(
+    'registryItemsRef',
+    expect.objectContaining({ taskCategories: [TaskCategory.Writing] })
+  );
 });
 
 test('Save does nothing when there is no authenticated user', async () => {

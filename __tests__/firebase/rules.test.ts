@@ -9,7 +9,7 @@ beforeAll(async () => {
   // when assertFails() exercises a denied write/read against the emulator.
   setLogLevel('silent');
   testEnv = await initializeTestEnvironment({
-    projectId: 'registry-app-test',
+    projectId: 'registry-app-test-rules',
     firestore: { rules: readFileSync('firestore.rules', 'utf8'), host: 'localhost', port: 8080 },
   });
 });

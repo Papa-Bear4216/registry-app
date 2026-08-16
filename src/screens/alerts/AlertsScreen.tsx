@@ -1,10 +1,47 @@
-import { View, Text } from 'react-native';
+import { View, Text, FlatList, Button } from 'react-native';
+import { useAuth } from '../../hooks/useAuth';
+import { useRegistryItems } from '../../hooks/useRegistryItems';
+import { useObservations } from '../../hooks/useObservations';
+import { useAlertDismissals } from '../../hooks/useAlertDismissals';
+import { isDormant } from '../../lib/dormancy';
+import { AlertType } from '../../types/enums';
+import { RegistryItem } from '../../types/models';
 
-// Placeholder — real implementation lands in a later task.
-export function AlertsScreen() {
+// Phase 1 only implements the Dormant alert. HighCost and Redundant exist in
+// the AlertType enum (Task 2) but are not derived or shown anywhere in this
+// screen — cost-per-use is display-only (ItemDetailScreen), never an alert.
+function DormantRow({ item, uid }: { item: RegistryItem; uid: string }) {
+  const { observations } = useObservations(item.id);
+  const { dismiss, isDismissed } = useAlertDismissals(uid);
+  const dormant = isDormant(observations);
+
+  if (!dormant || isDismissed(item.id, AlertType.Dormant)) return null;
+
   return (
-    <View>
-      <Text>Alerts</Text>
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', padding: 12 }}>
+      <Text>{item.name} — dormant</Text>
+      <Button
+        title="Snooze 7d"
+        onPress={() =>
+          dismiss(item.id, AlertType.Dormant, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString())
+        }
+      />
+      <Button title="Dismiss" onPress={() => dismiss(item.id, AlertType.Dormant, null)} />
     </View>
+  );
+}
+
+export function AlertsScreen() {
+  const { user } = useAuth();
+  const { items, loading } = useRegistryItems(user?.uid ?? '');
+
+  if (loading) return <Text>Loading…</Text>;
+
+  return (
+    <FlatList
+      data={items}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <DormantRow item={item} uid={user!.uid} />}
+    />
   );
 }

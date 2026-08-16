@@ -4,3 +4,5 @@ ui-debug.log
 firebase-debug.log
 .firebase/
 .env
+.expo/
+dist/

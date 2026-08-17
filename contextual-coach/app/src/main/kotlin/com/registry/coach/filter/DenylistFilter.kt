@@ -41,11 +41,15 @@ class DenylistFilter @Inject constructor(
 
     companion object {
         /** Load the denylist from the bundled resource file. Called once at startup. */
-        fun fromResource(context: Context): DenylistFilter {
+        fun fromResource(context: Context): DenylistFilter =
+            DenylistFilter(loadBlockedPackages(context))
+
+        /** Read just the package-name set, for callers that only need the raw data (e.g. DI providers). */
+        fun loadBlockedPackages(context: Context): Set<String> {
             val jsonText = context.resources.openRawResource(R.raw.sensitive_apps)
                 .bufferedReader().use { it.readText() }
             val parsed = Json.decodeFromString<SensitiveAppsFile>(jsonText)
-            return DenylistFilter(parsed.packages.toSet())
+            return parsed.packages.toSet()
         }
     }
 }

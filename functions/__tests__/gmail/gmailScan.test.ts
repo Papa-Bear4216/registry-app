@@ -25,3 +25,27 @@ test('creates one stagingItem per matched receipt email', async () => {
   expect(stagingItems[0].createdBy).toBe('alice');
   expect(stagingItems[0].collector).toBe('gmail');
 });
+
+test('one message throwing during processing does not abort the rest of the scan', async () => {
+  const { extractReceiptFromMessage } = require('../../src/gmail/processGmailMessage');
+  (extractReceiptFromMessage as jest.Mock)
+    .mockImplementationOnce(() => Promise.reject(new Error('Malformed extraction response from AI')))
+    .mockImplementationOnce(() => Promise.resolve({ rawLabel: 'Spotify Premium', rawCategory: 'Media' }));
+
+  const stagingItems: any[] = [];
+  const fakeDb: any = { collection: () => ({ add: async (data: any) => { stagingItems.push(data); return { id: 'x' }; } }) };
+  const fakeGmailClient: any = {
+    listMessages: async () => [
+      { id: 'msg1', subject: 'Bad message', snippet: '...' },
+      { id: 'msg2', subject: 'Your Spotify receipt', snippet: '...' },
+    ],
+    getMessageBody: async () => 'body',
+  };
+  const fakeOpenai: any = {};
+
+  const result = await handleGmailScan(fakeDb, fakeOpenai, fakeGmailClient, 'alice');
+
+  expect(result.stagingItemsCreated).toBe(1);
+  expect(stagingItems).toHaveLength(1);
+  expect(stagingItems[0].rawLabel).toBe('Spotify Premium');
+});

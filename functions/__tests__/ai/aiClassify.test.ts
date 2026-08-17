@@ -30,9 +30,18 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
       where: () => ({ where: () => ({ limit: () => ({ get: async () => ({ empty: true, docs: [] }) }) }), get: async () => ({ docs: [] }) }),
     }),
   };
+  // This fake OpenAI client backs two distinct calls inside processStagingItem, in order:
+  // findFuzzyMatch (expects { suggestedMatchId, confidence: 'low' | 'confirmed' }), then
+  // classifyStagingItem (expects { kind, category, active, confidence: number }). Their
+  // `confidence` shapes conflict, so respond differently per call rather than reusing one fixture.
+  let callCount = 0;
+  const responses = [
+    { suggestedMatchId: null, confidence: 'low' },
+    { kind: 'subscription', category: 'media', active: true, confidence: 0.9 },
+  ];
   const fakeOpenai: any = {
     chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 }) } }],
+      choices: [{ message: { content: JSON.stringify(responses[callCount++]) } }],
     }) } },
   };
 

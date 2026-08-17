@@ -27,25 +27,30 @@ export async function handleGmailScan(
 
   let created = 0;
   for (const message of messages) {
-    const body = await gmailClient.getMessageBody(message.id);
-    const extracted = await extractReceiptFromMessage(openai, message.subject, body);
-    if (!extracted) continue;
+    try {
+      const body = await gmailClient.getMessageBody(message.id);
+      const extracted = await extractReceiptFromMessage(openai, message.subject, body);
+      if (!extracted) continue;
 
-    await db.collection('stagingItems').add({
-      rawLabel: extracted.rawLabel,
-      rawCategory: extracted.rawCategory,
-      rawIdentity: null,
-      payloadSnapshot: JSON.stringify({ subject: message.subject, snippet: message.snippet }),
-      collector: CollectorType.Gmail,
-      sourceId: 'gmail',
-      capturedAt: new Date().toISOString(),
-      suggestedMatch: null,
-      suggestionConfidence: null,
-      resolved: false,
-      resolvedAt: null,
-      createdBy: uid,
-    });
-    created++;
+      await db.collection('stagingItems').add({
+        rawLabel: extracted.rawLabel,
+        rawCategory: extracted.rawCategory,
+        rawIdentity: null,
+        payloadSnapshot: JSON.stringify({ subject: message.subject, snippet: message.snippet }),
+        collector: CollectorType.Gmail,
+        sourceId: 'gmail',
+        capturedAt: new Date().toISOString(),
+        suggestedMatch: null,
+        suggestionConfidence: null,
+        resolved: false,
+        resolvedAt: null,
+        createdBy: uid,
+      });
+      created++;
+    } catch (e) {
+      console.error(`handleGmailScan failed for message ${message.id}:`, e);
+      continue;
+    }
   }
 
   return { stagingItemsCreated: created };

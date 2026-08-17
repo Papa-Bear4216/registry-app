@@ -18,6 +18,20 @@ export async function findExactMatch(
   return { id: result.docs[0].id };
 }
 
+interface FuzzyMatchResponse {
+  suggestedMatchId: string | null;
+  confidence: 'low' | 'confirmed';
+}
+
+function isValidFuzzyMatchResponse(x: any): x is FuzzyMatchResponse {
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    (x.suggestedMatchId === null || typeof x.suggestedMatchId === 'string') &&
+    (x.confidence === 'low' || x.confidence === 'confirmed')
+  );
+}
+
 export async function findFuzzyMatch(
   openai: OpenAI,
   db: Firestore,
@@ -30,12 +44,16 @@ export async function findFuzzyMatch(
   const systemPrompt = `You match a newly discovered subscription/tool name against a user's existing registry. Respond in JSON: { "suggestedMatchId": string | null, "confidence": "low" | "confirmed" }. Return null if no candidate plausibly refers to the same tool.`;
   const userPrompt = `New item: "${rawLabel}"\nExisting registry: ${JSON.stringify(candidates)}`;
 
-  const parsed = (await callJsonMode(openai, systemPrompt, userPrompt)) as {
-    suggestedMatchId: string | null;
-    confidence: 'low' | 'confirmed';
-  };
+  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  if (!isValidFuzzyMatchResponse(parsed)) {
+    throw new Error('Malformed fuzzy-match response from AI');
+  }
 
   if (!parsed.suggestedMatchId) return null;
+
+  // Guard against the AI hallucinating an id that wasn't among the candidates sent to it.
+  if (!candidates.some((c) => c.id === parsed.suggestedMatchId)) return null;
+
   return {
     id: parsed.suggestedMatchId,
     confidence: parsed.confidence === 'confirmed' ? MatchConfidence.Confirmed : MatchConfidence.Low,

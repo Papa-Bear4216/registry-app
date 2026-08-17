@@ -51,3 +51,38 @@ test('findFuzzyMatch returns null when the AI finds no plausible match', async (
   const result = await findFuzzyMatch(fakeOpenai, db, 'alice', 'Some Obscure Tool');
   expect(result).toBeNull();
 });
+
+test('findFuzzyMatch throws on a malformed AI response (missing confidence)', async () => {
+  const db: any = { collection: () => ({ where: () => ({ get: async () => ({ docs: [{ id: 'item-2', data: () => ({ name: 'Netflix' }) }] }) }) }) };
+  const fakeOpenai: any = {
+    chat: { completions: { create: async () => ({
+      choices: [{ message: { content: JSON.stringify({ suggestedMatchId: 'item-2' }) } }],
+    }) } },
+  };
+  await expect(findFuzzyMatch(fakeOpenai, db, 'alice', 'Netflix.com')).rejects.toThrow(
+    'Malformed fuzzy-match response from AI'
+  );
+});
+
+test('findFuzzyMatch throws on a malformed AI response (invalid confidence value)', async () => {
+  const db: any = { collection: () => ({ where: () => ({ get: async () => ({ docs: [{ id: 'item-2', data: () => ({ name: 'Netflix' }) }] }) }) }) };
+  const fakeOpenai: any = {
+    chat: { completions: { create: async () => ({
+      choices: [{ message: { content: JSON.stringify({ suggestedMatchId: 'item-2', confidence: 'maybe' }) } }],
+    }) } },
+  };
+  await expect(findFuzzyMatch(fakeOpenai, db, 'alice', 'Netflix.com')).rejects.toThrow(
+    'Malformed fuzzy-match response from AI'
+  );
+});
+
+test('findFuzzyMatch returns null when the AI hallucinates an id not among the candidates', async () => {
+  const db: any = { collection: () => ({ where: () => ({ get: async () => ({ docs: [{ id: 'item-2', data: () => ({ name: 'Netflix' }) }] }) }) }) };
+  const fakeOpenai: any = {
+    chat: { completions: { create: async () => ({
+      choices: [{ message: { content: JSON.stringify({ suggestedMatchId: 'item-99', confidence: 'confirmed' }) } }],
+    }) } },
+  };
+  const result = await findFuzzyMatch(fakeOpenai, db, 'alice', 'Netflix.com');
+  expect(result).toBeNull();
+});

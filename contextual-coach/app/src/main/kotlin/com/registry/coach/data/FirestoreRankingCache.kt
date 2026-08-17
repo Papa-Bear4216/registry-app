@@ -27,20 +27,26 @@ class FirestoreRankingCache @Inject constructor(
     // In-memory caches
     private val rankings = mutableMapOf<TaskCategory, CachedTaskRanking>()
     private val itemsByCanonical = mutableMapOf<String, CachedRegistryItem>()
-    private val itemsById = mutableMapOf<String, CachedRegistryItem>()
+    internal val itemsById = mutableMapOf<String, CachedRegistryItem>()
+
+    // Raw ranking data from Firestore, kept separately from `rankings` so
+    // bestItemName can be recomputed whenever itemsById changes, without
+    // needing a fresh Firestore snapshot.
+    internal data class RawRanking(val orderedIds: List<String>, val bestId: String)
+    internal val rawRankings = mutableMapOf<TaskCategory, RawRanking>()
 
     private var rankingListener: ListenerRegistration? = null
     private var itemListener: ListenerRegistration? = null
 
     /** Start listening for Firestore changes. Call once after auth. */
-    fun startListening() {
+    override fun startListening() {
         val uid = auth.currentUser?.uid ?: return
 
         rankingListener = db.collection("taskRankings")
             .whereEqualTo("createdBy", uid)
             .addSnapshotListener { snapshot, _ ->
                 snapshot ?: return@addSnapshotListener
-                rankings.clear()
+                rawRankings.clear()
                 for (doc in snapshot.documents) {
                     val category = TaskCategory.fromWire(
                         doc.getString("taskCategory") ?: continue
@@ -48,15 +54,9 @@ class FirestoreRankingCache @Inject constructor(
                     val orderedItems = doc.get("orderedItems") as? List<*> ?: continue
                     val orderedIds = orderedItems.filterIsInstance<String>()
                     val bestId = orderedIds.firstOrNull() ?: continue
-                    val bestName = itemsById[bestId]?.name ?: bestId
-
-                    rankings[category] = CachedTaskRanking(
-                        taskCategory = category,
-                        orderedItemIds = orderedIds,
-                        bestItemId = bestId,
-                        bestItemName = bestName,
-                    )
+                    rawRankings[category] = RawRanking(orderedIds, bestId)
                 }
+                rebuildRankings()
             }
 
         itemListener = db.collection("registryItems")
@@ -81,10 +81,31 @@ class FirestoreRankingCache @Inject constructor(
                     itemsById[doc.id] = item
                     item.canonicalIdentity?.let { itemsByCanonical[it] = item }
                 }
+                rebuildRankings()
             }
     }
 
-    fun stopListening() {
+    /**
+     * Recompute `rankings` (with resolved bestItemName) from the current
+     * `rawRankings` + `itemsById` state. Called after EITHER listener fires,
+     * so name resolution never depends on listener firing order — whichever
+     * snapshot arrives first produces a best-effort id-as-name fallback,
+     * and the next snapshot (from either collection) corrects it.
+     */
+    internal fun rebuildRankings() {
+        rankings.clear()
+        for ((category, raw) in rawRankings) {
+            val bestName = itemsById[raw.bestId]?.name ?: raw.bestId
+            rankings[category] = CachedTaskRanking(
+                taskCategory = category,
+                orderedItemIds = raw.orderedIds,
+                bestItemId = raw.bestId,
+                bestItemName = bestName,
+            )
+        }
+    }
+
+    override fun stopListening() {
         rankingListener?.remove()
         itemListener?.remove()
     }

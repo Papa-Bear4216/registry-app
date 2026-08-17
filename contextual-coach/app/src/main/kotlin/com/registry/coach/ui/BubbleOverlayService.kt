@@ -13,6 +13,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.registry.coach.R
+import com.registry.coach.data.TaskCategory
 import com.registry.coach.evaluator.GapResult
 import com.registry.coach.monitor.AnonymousCounters
 import dagger.hilt.android.AndroidEntryPoint
@@ -36,6 +37,34 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class BubbleOverlayService : Service(), BubbleRenderer {
 
+    companion object {
+        private const val EXTRA_SUGGESTED_APP_NAME = "extra_suggested_app_name"
+        private const val EXTRA_TASK_CATEGORY = "extra_task_category"
+        private const val EXTRA_USAGE_FACT_TEXT = "extra_usage_fact_text"
+
+        /** Build the [Intent] AccessibilityMonitor uses to request a collapsed bubble. */
+        fun showCollapsedIntent(context: android.content.Context, gap: GapResult.RealGap): Intent {
+            return Intent(context, BubbleOverlayService::class.java).apply {
+                putExtra(EXTRA_SUGGESTED_APP_NAME, gap.suggestedAppName)
+                putExtra(EXTRA_TASK_CATEGORY, gap.taskCategory.name)
+                putExtra(EXTRA_USAGE_FACT_TEXT, gap.usageFactText)
+            }
+        }
+
+        internal fun gapFromIntent(intent: Intent?): GapResult.RealGap? {
+            intent ?: return null
+            val appName = intent.getStringExtra(EXTRA_SUGGESTED_APP_NAME) ?: return null
+            val categoryName = intent.getStringExtra(EXTRA_TASK_CATEGORY) ?: return null
+            val category = try {
+                TaskCategory.valueOf(categoryName)
+            } catch (e: IllegalArgumentException) {
+                return null
+            }
+            val factText = intent.getStringExtra(EXTRA_USAGE_FACT_TEXT) ?: return null
+            return GapResult.RealGap(appName, category, factText)
+        }
+    }
+
     @Inject lateinit var counters: AnonymousCounters
 
     private var windowManager: WindowManager? = null
@@ -48,6 +77,14 @@ class BubbleOverlayService : Service(), BubbleRenderer {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WINDOW_SERVICE) as WindowManager
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val gap = gapFromIntent(intent)
+        if (gap != null) {
+            showCollapsed(gap)
+        }
+        return START_NOT_STICKY
     }
 
     override fun showCollapsed(gap: GapResult.RealGap) {

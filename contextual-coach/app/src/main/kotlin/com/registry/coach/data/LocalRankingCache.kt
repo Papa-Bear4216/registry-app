@@ -20,6 +20,12 @@ interface LocalRankingCache {
      * no tree read. Returns false if the package is not in the registry at all.
      */
     fun hasPlausibleGap(packageName: String): Boolean
+
+    /** Begin syncing from Firestore. Must be called once, after auth is available. */
+    fun startListening()
+
+    /** Stop syncing and release listener resources. */
+    fun stopListening()
 }
 
 data class CachedTaskRanking(

@@ -3,6 +3,7 @@ package com.registry.coach.monitor
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.registry.coach.data.TaskCategory
+import kotlinx.coroutines.tasks.await
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -19,10 +20,10 @@ class AnonymousCounters @Inject constructor(
     private val db: FirebaseFirestore,
     private val auth: FirebaseAuth,
 ) {
-    private var shownToday = 0
-    private var expandedToday = 0
-    private var actedOnToday = 0
-    private var suppressedToday = 0
+    internal var shownToday = 0
+    internal var expandedToday = 0
+    internal var actedOnToday = 0
+    internal var suppressedToday = 0
 
     // Per-category session time tracking for usage-awareness fact text
     private val sessionMinutes = mutableMapOf<TaskCategory, Int>()
@@ -63,9 +64,12 @@ class AnonymousCounters @Inject constructor(
                 "date" to today,
                 "createdBy" to uid,
             )
-        )
+        ).await()
 
-        // Reset after sync
+        // Reset only after the write is confirmed committed — an unawaited
+        // reset here would silently drop the day's counts if the write
+        // failed or was still in flight (spec section 5: these counters
+        // are the ONLY record kept, so losing them is unrecoverable).
         shownToday = 0
         expandedToday = 0
         actedOnToday = 0

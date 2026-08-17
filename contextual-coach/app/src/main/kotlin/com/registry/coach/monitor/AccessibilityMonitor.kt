@@ -8,7 +8,7 @@ import com.registry.coach.data.LocalRankingCache
 import com.registry.coach.evaluator.GapEvaluator
 import com.registry.coach.evaluator.GapResult
 import com.registry.coach.filter.DenylistFilter
-import com.registry.coach.ui.BubbleRenderer
+import com.registry.coach.ui.BubbleOverlayService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -43,7 +43,6 @@ class AccessibilityMonitor : AccessibilityService() {
     @Inject lateinit var denylistFilter: DenylistFilter
     @Inject lateinit var rankingCache: LocalRankingCache
     @Inject lateinit var gapEvaluator: GapEvaluator
-    @Inject lateinit var bubbleRenderer: BubbleRenderer
     @Inject lateinit var counters: AnonymousCounters
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -54,6 +53,7 @@ class AccessibilityMonitor : AccessibilityService() {
     override fun onServiceConnected() {
         super.onServiceConnected()
         systemPackages = loadSystemPackages()
+        rankingCache.startListening()
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent) {
@@ -104,7 +104,7 @@ class AccessibilityMonitor : AccessibilityService() {
 
             when (result) {
                 is GapResult.RealGap -> {
-                    bubbleRenderer.showCollapsed(result)
+                    startService(BubbleOverlayService.showCollapsedIntent(this@AccessibilityMonitor, result))
                     counters.incrementShown()
                 }
                 is GapResult.NoGap -> {
@@ -122,6 +122,7 @@ class AccessibilityMonitor : AccessibilityService() {
     override fun onDestroy() {
         super.onDestroy()
         dwellTimer.cancel()
+        rankingCache.stopListening()
     }
 
     /** Load the set of system-installed package names for isSystemApp checks. */

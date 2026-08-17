@@ -12,7 +12,8 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "package": "com.anonymous.registryapp"
     },
     "web": {
       "bundler": "metro"

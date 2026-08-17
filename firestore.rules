@@ -23,5 +23,15 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource);
       allow update: if isOwner(resource) && isOwnerOnCreate();
     }
+    match /stagingItems/{itemId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
+    match /deviceSources/{sourceId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
   }
 }

@@ -45,3 +45,27 @@ test('owner cannot change createdBy on update', async () => {
   });
   await assertFails(updateDoc(doc(alice, 'registryItems/item1'), { createdBy: 'bob' }));
 });
+
+test('owner can create and read their own stagingItem', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const itemRef = doc(alice, 'stagingItems/staging1');
+  await assertSucceeds(setDoc(itemRef, { rawLabel: 'Netflix', createdBy: 'alice' }));
+  await assertSucceeds(getDoc(itemRef));
+});
+
+test('non-owner cannot read another user\'s stagingItem', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const bob = testEnv.authenticatedContext('bob').firestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'stagingItems/staging1'), { rawLabel: 'Netflix', createdBy: 'alice' });
+  });
+  await assertFails(getDoc(doc(bob, 'stagingItems/staging1')));
+});
+
+test('owner cannot reassign createdBy on a deviceSource update', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'deviceSources/device1'), { sourceId: 'x', createdBy: 'alice' });
+  });
+  await assertFails(updateDoc(doc(alice, 'deviceSources/device1'), { createdBy: 'bob' }));
+});

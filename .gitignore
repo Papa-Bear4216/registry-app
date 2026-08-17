@@ -1,4 +1,5 @@
 node_modules/
+functions/lib/
 firestore-debug.log
 ui-debug.log
 firebase-debug.log

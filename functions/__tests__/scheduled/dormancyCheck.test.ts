@@ -1,14 +1,28 @@
 import { runRetrySweep } from '../../src/scheduled/dormancyCheck';
 
-test('re-processes stagingItems where resolved is false', async () => {
-  const processed: string[] = [];
-  const fakeDoc = { id: 'stuck-item', data: () => ({ rawLabel: 'Hulu' }) };
-  const fakeDb: any = {
-    collection: () => ({
-      where: () => ({
-        get: async () => ({ docs: [fakeDoc] }),
+// Builds a fake Firestore collection whose where() actually filters the held
+// doc set by field/op/value, and is chainable, so tests can prove filtering
+// behavior rather than just that get() was eventually called.
+function fakeCollectionOf(seedDocs: Array<{ id: string; fields: Record<string, any> }>) {
+  function makeQuery(docs: typeof seedDocs) {
+    return {
+      where: (field: string, op: string, value: any) => {
+        if (op !== '==') throw new Error(`unsupported op in fake: ${op}`);
+        return makeQuery(docs.filter((d) => d.fields[field] === value));
+      },
+      get: async () => ({
+        docs: docs.map((d) => ({ id: d.id, data: () => d.fields })),
       }),
-    }),
+    };
+  }
+  return makeQuery(seedDocs);
+}
+
+test('re-processes stagingItems where resolved is false and classifiedAt is null', async () => {
+  const processed: string[] = [];
+  const fakeDb: any = {
+    collection: () =>
+      fakeCollectionOf([{ id: 'stuck-item', fields: { rawLabel: 'Hulu', resolved: false, classifiedAt: null } }]),
   };
   const fakeProcessFn = async (openai: any, db: any, doc: any) => {
     processed.push(doc.id);
@@ -21,7 +35,7 @@ test('re-processes stagingItems where resolved is false', async () => {
 });
 
 test('does not process anything when no stagingItems are stuck', async () => {
-  const fakeDb: any = { collection: () => ({ where: () => ({ get: async () => ({ docs: [] }) }) }) };
+  const fakeDb: any = { collection: () => fakeCollectionOf([]) };
   let called = false;
   const fakeProcessFn = async () => { called = true; };
 
@@ -32,14 +46,12 @@ test('does not process anything when no stagingItems are stuck', async () => {
 
 test('continues processing remaining docs when one doc throws', async () => {
   const processed: string[] = [];
-  const fakeDocA = { id: 'failing-item', data: () => ({ rawLabel: 'Boom' }) };
-  const fakeDocB = { id: 'ok-item', data: () => ({ rawLabel: 'Fine' }) };
   const fakeDb: any = {
-    collection: () => ({
-      where: () => ({
-        get: async () => ({ docs: [fakeDocA, fakeDocB] }),
-      }),
-    }),
+    collection: () =>
+      fakeCollectionOf([
+        { id: 'failing-item', fields: { rawLabel: 'Boom', resolved: false, classifiedAt: null } },
+        { id: 'ok-item', fields: { rawLabel: 'Fine', resolved: false, classifiedAt: null } },
+      ]),
   };
   const fakeProcessFn = async (openai: any, db: any, doc: any) => {
     if (doc.id === 'failing-item') {
@@ -51,4 +63,25 @@ test('continues processing remaining docs when one doc throws', async () => {
   await runRetrySweep({} as any, fakeDb, fakeProcessFn);
 
   expect(processed).toEqual(['ok-item']);
+});
+
+test('skips items that were successfully classified and are only awaiting user review', async () => {
+  const processed: string[] = [];
+  const fakeDb: any = {
+    collection: () =>
+      fakeCollectionOf([
+        { id: 'never-classified', fields: { rawLabel: 'Hulu', resolved: false, classifiedAt: null } },
+        {
+          id: 'awaiting-review',
+          fields: { rawLabel: 'Spotify', resolved: false, classifiedAt: '2026-08-15T00:00:00.000Z' },
+        },
+      ]),
+  };
+  const fakeProcessFn = async (openai: any, db: any, doc: any) => {
+    processed.push(doc.id);
+  };
+
+  await runRetrySweep({} as any, fakeDb, fakeProcessFn);
+
+  expect(processed).toEqual(['never-classified']);
 });

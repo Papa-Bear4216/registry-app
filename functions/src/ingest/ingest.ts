@@ -63,6 +63,7 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
     suggestionConfidence: null,
     resolved: false,
     resolvedAt: null,
+    classifiedAt: null,
     createdBy: uid,
   });
 

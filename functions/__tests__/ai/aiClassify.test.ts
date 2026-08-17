@@ -50,4 +50,6 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
   expect(updates).toHaveLength(1);
   expect(updates[0].resolved).toBe(false);
   expect(updates[0].classifiedKind).toBe('subscription');
+  expect(typeof updates[0].classifiedAt).toBe('string');
+  expect(updates[0].classifiedAt).not.toBeNull();
 });

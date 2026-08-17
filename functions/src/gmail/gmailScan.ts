@@ -44,6 +44,7 @@ export async function handleGmailScan(
         suggestionConfidence: null,
         resolved: false,
         resolvedAt: null,
+        classifiedAt: null,
         createdBy: uid,
       });
       created++;

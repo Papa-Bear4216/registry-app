@@ -7,7 +7,11 @@ import { processStagingItem } from '../ai/aiClassify';
 type ProcessFn = (openai: OpenAI, db: Firestore, doc: DocumentSnapshot) => Promise<void>;
 
 export async function runRetrySweep(openai: OpenAI, db: Firestore, processFn: ProcessFn = processStagingItem): Promise<void> {
-  const stuck = await db.collection('stagingItems').where('resolved', '==', false).get();
+  const stuck = await db
+    .collection('stagingItems')
+    .where('resolved', '==', false)
+    .where('classifiedAt', '==', null)
+    .get();
   for (const doc of stuck.docs) {
     try {
       await processFn(openai, db, doc);

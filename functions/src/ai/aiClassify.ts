@@ -63,6 +63,7 @@ export async function processStagingItem(openai: OpenAI, db: Firestore, doc: Doc
     classifiedActive: classification.active,
     classifiedConfidence: classification.confidence,
     resolved: false, // stays false until the user approves/ignores in the Staging screen
+    classifiedAt: new Date().toISOString(), // marks successful classification so the retry sweep skips this item
   });
 }
 

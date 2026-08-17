@@ -51,7 +51,7 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
 
   const deviceSourceId = await findOrCreateDeviceSource(db, uid, body.sourceId, body.collector, body.sourceLabel);
 
-  await db.collection('stagingItems').add({
+  const stagingRef = await db.collection('stagingItems').add({
     rawLabel: body.rawLabel,
     rawCategory: body.rawCategory ?? null,
     rawIdentity: body.rawIdentity ?? null,
@@ -69,6 +69,7 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
 
   await db.collection('observations').add({
     registryItemId: null,
+    stagingItemId: stagingRef.id,
     deviceSourceId,
     collector: body.collector,
     observedAt: now,

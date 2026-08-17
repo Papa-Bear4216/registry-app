@@ -65,6 +65,19 @@ export async function processStagingItem(openai: OpenAI, db: Firestore, doc: Doc
     resolved: false, // stays false until the user approves/ignores in the Staging screen
     classifiedAt: new Date().toISOString(), // marks successful classification so the retry sweep skips this item
   });
+
+  // Backfill registryItemId on the observation this staging item originated
+  // from, so usage data becomes queryable by item once a match is resolved.
+  // Without this, ingest.ts's hardcoded registryItemId: null is never corrected.
+  if (suggestedMatch) {
+    const observations = await db
+      .collection('observations')
+      .where('stagingItemId', '==', doc.id)
+      .get();
+    for (const obsDoc of observations.docs) {
+      await obsDoc.ref.update({ registryItemId: suggestedMatch });
+    }
+  }
 }
 
 export const aiClassify = onDocumentCreated('stagingItems/{stagingItemId}', async (event) => {

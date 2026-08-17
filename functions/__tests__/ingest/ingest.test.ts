@@ -52,6 +52,7 @@ test('valid request creates a stagingItem and an observation scoped to the verif
   expect(db.stagingItems[0].rawLabel).toBe('Netflix');
   expect(db.observations).toHaveLength(1);
   expect(db.observations[0].createdBy).toBe('alice');
+  expect(db.observations[0].stagingItemId).toBe('stagingItems-id');
 });
 
 test('missing Authorization header returns 401 and writes nothing', async () => {

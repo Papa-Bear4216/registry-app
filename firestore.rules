@@ -43,5 +43,10 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource);
       allow update: if isOwner(resource) && isOwnerOnCreate();
     }
+    match /coachDailyCounters/{counterId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
   }
 }

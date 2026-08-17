@@ -25,6 +25,12 @@ data class IngestBody(
     val rawIdentity: String? = null,
     /** Usage payload */
     val payload: IngestPayload,
+    /**
+     * Deterministic per-record key (NOT random) letting the server dedupe a
+     * retried record after a partial-batch failure. See
+     * UsageCollectorWorker.toIngestBody for how this is derived.
+     */
+    val idempotencyKey: String,
 ) {
     companion object {
         /** Wire value matching CollectorType.PhoneUsage = "phone_usage" in functions/src/types/enums.ts */

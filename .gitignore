@@ -10,3 +10,4 @@ dist/
 */.gradle/
 */build/
 */*/build/
+google-services.json

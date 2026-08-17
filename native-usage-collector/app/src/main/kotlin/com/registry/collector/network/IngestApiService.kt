@@ -52,14 +52,14 @@ class IngestApiService @Inject constructor() {
                 .post(jsonBody.toRequestBody("application/json".toMediaType()))
                 .build()
 
-            val response = client.newCall(request).execute()
-
-            if (!response.isSuccessful) {
-                val errorBody = response.body?.string() ?: "Unknown error"
-                throw IngestApiException(
-                    statusCode = response.code,
-                    message = "POST /ingest failed (${response.code}): $errorBody"
-                )
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val errorBody = response.body?.string() ?: "Unknown error"
+                    throw IngestApiException(
+                        statusCode = response.code,
+                        message = "POST /ingest failed (${response.code}): $errorBody"
+                    )
+                }
             }
         }
     }

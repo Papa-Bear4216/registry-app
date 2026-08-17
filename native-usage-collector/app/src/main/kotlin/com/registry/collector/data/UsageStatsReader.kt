@@ -76,16 +76,15 @@ class UsageStatsReader @Inject constructor(
 
     /**
      * Resolves the launch count for a usage stat entry.
-     * API 28+ provides getAppLaunchCount() directly.
-     * On older APIs, defaults to 1 (we know the app was used, but not how many times).
+     *
+     * UsageStats.getAppLaunchCount() is @SystemApi (hidden) — not part of the
+     * public Android SDK at any API level, and does not compile against it.
+     * There is no reliable public-API launch count on UsageStats; the
+     * accurate way to get one is counting ACTIVITY_RESUMED events via
+     * UsageEvents, which is a larger reader rewrite out of scope here.
+     * Always returns 1 for now: "this app had non-zero foreground time in
+     * the window" is still a true, useful signal — it's the count itself
+     * that is not meaningful until that rewrite happens.
      */
-    private fun resolveLaunchCount(stat: UsageStats): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // API 30+ guarantees getAppLaunchCount()
-            stat.appLaunchCount.coerceAtLeast(1)
-        } else {
-            // Pre-API 30: no reliable launch count — report 1 (known to have been used)
-            1
-        }
-    }
+    private fun resolveLaunchCount(stat: UsageStats): Int = 1
 }

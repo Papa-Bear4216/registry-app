@@ -9,26 +9,27 @@ export async function findOrCreateDeviceSource(
   label: string
 ): Promise<string> {
   const now = new Date().toISOString();
-  const existing = await db
-    .collection('deviceSources')
-    .where('createdBy', '==', uid)
-    .where('sourceId', '==', sourceId)
-    .limit(1)
-    .get();
 
-  if (!existing.empty) {
-    const doc = existing.docs[0];
-    await doc.ref.update({ lastSeen: now });
-    return doc.id;
-  }
+  return db.runTransaction(async (transaction) => {
+    const existing = await transaction.get(
+      db.collection('deviceSources').where('createdBy', '==', uid).where('sourceId', '==', sourceId).limit(1)
+    );
 
-  const created = await db.collection('deviceSources').add({
-    sourceId,
-    label,
-    collector,
-    firstSeen: now,
-    lastSeen: now,
-    createdBy: uid,
+    if (!existing.empty) {
+      const doc = existing.docs[0];
+      transaction.update(doc.ref, { lastSeen: now });
+      return doc.id;
+    }
+
+    const newRef = db.collection('deviceSources').doc();
+    transaction.set(newRef, {
+      sourceId,
+      label,
+      collector,
+      firstSeen: now,
+      lastSeen: now,
+      createdBy: uid,
+    });
+    return newRef.id;
   });
-  return created.id;
 }

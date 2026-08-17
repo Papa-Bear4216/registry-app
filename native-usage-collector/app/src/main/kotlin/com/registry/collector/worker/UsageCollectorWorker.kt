@@ -51,10 +51,18 @@ class UsageCollectorWorker @AssistedInject constructor(
             return Result.retry()
         }
 
-        // 3. Determine sync window
+        // 3. Determine sync window. If a prior attempt for this window failed
+        // partway through, reuse its already-persisted start instead of
+        // recomputing from `now` — otherwise a retry after a partial-batch
+        // failure derives a different idempotencyKey per record and
+        // defeats the dedup this fixes (see SyncPreferences.pendingSyncWindowStart).
         val now = System.currentTimeMillis()
-        val sinceTimestamp = syncPreferences.lastSuccessfulSync.let { last ->
-            if (last > 0) last else now - DEFAULT_WINDOW_MS
+        val sinceTimestamp = syncPreferences.pendingSyncWindowStart ?: run {
+            val computed = syncPreferences.lastSuccessfulSync.let { last ->
+                if (last > 0) last else now - DEFAULT_WINDOW_MS
+            }
+            syncPreferences.setPendingSyncWindowStart(computed)
+            computed
         }
 
         // 4. Read usage data
@@ -71,7 +79,7 @@ class UsageCollectorWorker @AssistedInject constructor(
 
         try {
             for (record in records) {
-                val body = record.toIngestBody(sourceId, sourceLabel)
+                val body = record.toIngestBody(sourceId, sourceLabel, sinceTimestamp)
                 ingestApiService.postObservation(idToken, body)
             }
         } catch (e: IngestApiException) {
@@ -111,8 +119,15 @@ class UsageCollectorWorker @AssistedInject constructor(
 /**
  * Maps an [AppUsageRecord] to the exact [IngestBody] shape expected by
  * functions/src/ingest/ingest.ts.
+ *
+ * idempotencyKey is derived deterministically from (sourceId, packageName,
+ * sinceTimestamp) — NOT a random UUID — so that retrying the same sync
+ * window after a partial-batch failure produces the same key on the server,
+ * letting handleIngest recognize and skip an already-written duplicate.
+ * `internal` (not `private`) so UsageCollectorWorkerTest exercises this
+ * exact function rather than a separately-maintained test-local copy.
  */
-private fun AppUsageRecord.toIngestBody(sourceId: String, sourceLabel: String): IngestBody {
+internal fun AppUsageRecord.toIngestBody(sourceId: String, sourceLabel: String, sinceTimestamp: Long): IngestBody {
     return IngestBody(
         collector = IngestBody.COLLECTOR_PHONE_USAGE,
         sourceId = sourceId,
@@ -125,5 +140,6 @@ private fun AppUsageRecord.toIngestBody(sourceId: String, sourceLabel: String): 
             usageDurationMs = totalTimeInForegroundMs,
             windowHours = windowHours,
         ),
+        idempotencyKey = "$sourceId:$packageName:$sinceTimestamp",
     )
 }

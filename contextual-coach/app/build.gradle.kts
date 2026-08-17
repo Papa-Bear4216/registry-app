@@ -54,8 +54,8 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.common.ktx)
 
-    // On-device AI (Gemini Nano via AICore)
-    implementation(libs.play.services.ai)
+    // On-device AI (Gemini Nano via AICore): dependency deferred until
+    // AiCoreAvailability.kt is wired up to a real SDK — see TODO there.
 
     // AndroidX
     implementation(libs.core.ktx)

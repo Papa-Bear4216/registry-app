@@ -11,7 +11,6 @@ activity = "1.9.1"
 core-ktx = "1.13.1"
 appcompat = "1.7.0"
 material = "1.12.0"
-play-services-ai = "16.0.0"
 junit = "4.13.2"
 mockk = "1.13.12"
 google-services = "4.4.2"
@@ -27,7 +26,6 @@ appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "a
 activity-ktx = { group = "androidx.activity", name = "activity-ktx", version.ref = "activity" }
 lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycle" }
 material = { group = "com.google.android.material", name = "material", version.ref = "material" }
-play-services-ai = { group = "com.google.android.gms", name = "play-services-ai-generativeai", version.ref = "play-services-ai" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
 kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }

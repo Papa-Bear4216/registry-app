@@ -7,3 +7,6 @@ firebase-debug.log
 .env
 .expo/
 dist/
+*/.gradle/
+*/build/
+*/*/build/

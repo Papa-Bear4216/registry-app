@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Registry Usage Collector</string>
+    <string name="permission_required">Usage access permission is required to track app usage.</string>
+    <string name="permission_granted">✓ Usage access granted</string>
+    <string name="permission_denied">✗ Usage access not granted</string>
+    <string name="grant_permission">Grant Usage Access</string>
+    <string name="sign_in">Sign In</string>
+    <string name="sign_out">Sign Out</string>
+    <string name="sync_now">Sync Now</string>
+    <string name="last_sync">Last sync: %1$s</string>
+    <string name="last_sync_never">Last sync: Never</string>
+    <string name="sync_scheduled">Next sync in ~6 hours</string>
+    <string name="signed_in_as">Signed in as %1$s</string>
+    <string name="not_signed_in">Not signed in</string>
+</resources>

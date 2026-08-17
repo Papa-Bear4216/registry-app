@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Registry Coach</string>
+    <string name="settings_title">Coach Settings</string>
+    <string name="accessibility_service_description">Registry Coach monitors which apps you use to help you be more aware of your screen time and find better tools in your registry. It reads on-screen content momentarily to understand what kind of task you\'re doing. Nothing is stored, recorded, or sent anywhere.</string>
+    <string name="disclosure_title">How Registry Coach Works</string>
+    <string name="disclosure_what_it_does">Registry Coach monitors which apps you use to help you be more aware of your screen time and find better tools in your registry.</string>
+    <string name="disclosure_what_it_reads">It reads on-screen content momentarily to understand what kind of task you\'re doing. This data is processed on your device only and is never saved.</string>
+    <string name="disclosure_privacy">Nothing is stored, recorded, or sent anywhere — ever.</string>
+    <string name="grant_accessibility">Grant Accessibility Access</string>
+    <string name="grant_overlay">Grant Overlay Permission</string>
+    <string name="accessibility_granted">✓ Accessibility access granted</string>
+    <string name="accessibility_denied">✗ Accessibility access not granted</string>
+    <string name="overlay_granted">✓ Overlay permission granted</string>
+    <string name="overlay_denied">✗ Overlay permission not granted</string>
+    <string name="proceed_to_settings">Continue to Settings</string>
+    <string name="coach_enabled">Coach is active</string>
+    <string name="coach_disabled">Coach is inactive</string>
+    <string name="toggle_coach">Enable Registry Coach</string>
+    <string name="notification_channel_name">Coach Active</string>
+    <string name="notification_active">Registry Coach is monitoring your app usage</string>
+    <string name="not_supported_title">Device Not Supported</string>
+    <string name="not_supported_message">Registry Coach requires on-device AI capabilities that are not available on this device.</string>
+    <string name="sign_in">Sign In</string>
+</resources>

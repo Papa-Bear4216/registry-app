@@ -10,11 +10,17 @@ interface SuggestionEntry {
   reason: string;
 }
 
-function isValidSuggestionArray(x: any): x is SuggestionEntry[] {
+interface SuggestionResponse {
+  suggestions: SuggestionEntry[];
+}
+
+function isValidSuggestionResponse(x: any): x is SuggestionResponse {
   return (
-    Array.isArray(x) &&
-    x.every(
-      (entry) =>
+    x !== null &&
+    typeof x === 'object' &&
+    Array.isArray(x.suggestions) &&
+    x.suggestions.every(
+      (entry: any) =>
         typeof entry?.itemId === 'string' &&
         typeof entry?.suggestedAction === 'string' &&
         (entry?.suggestedAlternativeId === null || typeof entry?.suggestedAlternativeId === 'string') &&
@@ -27,15 +33,16 @@ export async function generateSuggestions(openai: OpenAI, db: Firestore, uid: st
   const items = await db.collection('registryItems').where('createdBy', '==', uid).get();
   const registrySummary = items.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 
-  const systemPrompt = `You are a spend-optimization assistant. Given a user's subscription registry, identify wasteful/redundant items. Respond in JSON as an array: [{ "itemId": string, "suggestedAction": "cut"|"consolidate"|"investigate", "suggestedAlternativeId": string | null, "reason": string }]. Only include items worth flagging — an empty array is a valid response.`;
+  const systemPrompt = `You are a spend-optimization assistant. Given a user's subscription registry, identify wasteful/redundant items. Respond in JSON as an object: { "suggestions": [{ "itemId": string, "suggestedAction": "cut"|"consolidate"|"investigate", "suggestedAlternativeId": string | null, "reason": string }] }. Only include items worth flagging — an empty array is a valid response.`;
   const userPrompt = `Registry: ${JSON.stringify(registrySummary)}`;
 
   const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
-  if (!isValidSuggestionArray(parsed)) {
+  if (!isValidSuggestionResponse(parsed)) {
     throw new Error('Malformed suggestion response from AI');
   }
+  const suggestions = parsed.suggestions;
 
-  for (const entry of parsed) {
+  for (const entry of suggestions) {
     await db.collection('suggestions').add({
       item: entry.itemId,
       suggestedAction: entry.suggestedAction,
@@ -50,7 +57,7 @@ export async function generateSuggestions(openai: OpenAI, db: Firestore, uid: st
     });
   }
 
-  return parsed.length;
+  return suggestions.length;
 }
 
 export const aiSuggest = onSchedule('every monday 08:00', async () => {

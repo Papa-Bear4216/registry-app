@@ -10,7 +10,7 @@ test('parses a well-formed suggestion array and writes one suggestion doc per en
   };
   const fakeOpenai: any = {
     chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify([{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }]) } }],
+      choices: [{ message: { content: JSON.stringify({ suggestions: [{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }] }) } }],
     }) } },
   };
 
@@ -23,7 +23,7 @@ test('parses a well-formed suggestion array and writes one suggestion doc per en
   expect(created[0].createdBy).toBe('alice');
 });
 
-test('throws on a malformed suggestion response (not an array) and does not partial-write', async () => {
+test('throws on a malformed suggestion response (bare array, missing the object wrapper) and does not partial-write', async () => {
   const created: any[] = [];
   const fakeDb: any = {
     collection: () => ({
@@ -33,7 +33,24 @@ test('throws on a malformed suggestion response (not an array) and does not part
   };
   const fakeOpenai: any = {
     chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ notAnArray: true }) } }],
+      choices: [{ message: { content: JSON.stringify([{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }]) } }],
+    }) } },
+  };
+  await expect(generateSuggestions(fakeOpenai, fakeDb, 'alice')).rejects.toThrow();
+  expect(created).toHaveLength(0);
+});
+
+test('throws on a malformed suggestion entry inside a correctly-wrapped response and does not partial-write', async () => {
+  const created: any[] = [];
+  const fakeDb: any = {
+    collection: () => ({
+      where: () => ({ get: async () => ({ docs: [{ id: 'item-1', data: () => ({ name: 'Hulu', cost: 15 }) }] }) }),
+      add: async (data: any) => { created.push(data); return { id: 'suggestion-1' }; },
+    }),
+  };
+  const fakeOpenai: any = {
+    chat: { completions: { create: async () => ({
+      choices: [{ message: { content: JSON.stringify({ suggestions: [{ itemId: 123 }] }) } }],
     }) } },
   };
   await expect(generateSuggestions(fakeOpenai, fakeDb, 'alice')).rejects.toThrow();

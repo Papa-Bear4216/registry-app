@@ -60,8 +60,9 @@ Every OpenAI call uses JSON mode (`response_format: { type: "json_object" }`) wi
 // aiClassify — fuzzy-dedup fallback call (only invoked when exact canonicalIdentity match fails)
 { suggestedMatchId: string | null, confidence: "low" | "confirmed" }
 
-// aiSuggest — spend-optimizer, one array entry per flagged item
-[{ itemId: string, suggestedAction: SuggestionAction, suggestedAlternativeId: string | null, reason: string }]
+// aiSuggest — spend-optimizer, object-wrapped array (one entry per flagged item);
+// wrapped in a named key because json_object mode requires a top-level object
+{ suggestions: [{ itemId: string, suggestedAction: SuggestionAction, suggestedAlternativeId: string | null, reason: string }] }
 
 // aiRank — per-category ranking, callable on demand
 { orderedItemIds: string[], bestItemId: string }

@@ -30,14 +30,33 @@ export async function rankCategory(openai: OpenAI, db: Firestore, uid: string, t
     throw new Error('Malformed ranking response from AI');
   }
 
-  await db.collection('taskRankings').add({
+  // Guard against the AI hallucinating an id that wasn't among the candidates sent to it.
+  const candidateIds = new Set(candidates.map((c) => c.id));
+  if (!candidateIds.has(parsed.bestItemId) || !parsed.orderedItemIds.every((id) => candidateIds.has(id))) {
+    throw new Error('AI ranking response referenced an item id not in the candidate set');
+  }
+
+  const existingRanking = await db
+    .collection('taskRankings')
+    .where('createdBy', '==', uid)
+    .where('taskCategory', '==', taskCategory)
+    .limit(1)
+    .get();
+
+  const rankingData = {
     taskCategory,
     orderedItems: parsed.orderedItemIds,
     lastRankedAt: new Date().toISOString(),
     manuallyOverridden: false,
     overrideNote: null,
     createdBy: uid,
-  });
+  };
+
+  if (existingRanking.empty) {
+    await db.collection('taskRankings').add(rankingData);
+  } else {
+    await existingRanking.docs[0].ref.update(rankingData);
+  }
 
   for (const doc of items.docs) {
     await doc.ref.update({ isBestForTask: doc.id === parsed.bestItemId });

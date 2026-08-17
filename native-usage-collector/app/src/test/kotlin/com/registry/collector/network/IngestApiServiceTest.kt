@@ -53,6 +53,7 @@ class IngestApiServiceTest {
                 usageDurationMs = 1_800_000,
                 windowHours = 6,
             ),
+            idempotencyKey = "test_device:com.slack:1700000000000",
         )
 
         // We can't easily test IngestApiService directly (it uses BuildConfig.INGEST_BASE_URL),
@@ -66,6 +67,7 @@ class IngestApiServiceTest {
         assertEquals("Pixel 8", parsed["sourceLabel"]?.jsonPrimitive?.content)
         assertEquals("Slack", parsed["rawLabel"]?.jsonPrimitive?.content)
         assertEquals("com.slack", parsed["rawIdentity"]?.jsonPrimitive?.content)
+        assertEquals("test_device:com.slack:1700000000000", parsed["idempotencyKey"]?.jsonPrimitive?.content)
 
         // Verify nested payload
         val payloadStr = parsed["payload"].toString()
@@ -81,6 +83,7 @@ class IngestApiServiceTest {
             sourceLabel = "x",
             rawLabel = "x",
             payload = IngestPayload(usageCount = 1, usageDurationMs = 1000, windowHours = 1),
+            idempotencyKey = "x:x:1700000000000",
         )
         assertEquals("phone_usage", body.collector)
     }
@@ -92,6 +95,7 @@ class IngestApiServiceTest {
             sourceLabel = "x",
             rawLabel = "x",
             payload = IngestPayload(usageCount = 1, usageDurationMs = 1000, windowHours = 1),
+            idempotencyKey = "x:x:1700000000000",
         )
         assertEquals(null, body.rawCategory)
     }
@@ -104,6 +108,7 @@ class IngestApiServiceTest {
             sourceLabel = "x",
             rawLabel = "x",
             payload = IngestPayload(usageCount = 1, usageDurationMs = 1000, windowHours = 1),
+            idempotencyKey = "x:x:1700000000000",
         )
         val serialized = json.encodeToString(body)
         // The server's isValidBody() doesn't require rawCategory, but we should

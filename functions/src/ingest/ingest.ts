@@ -12,6 +12,7 @@ interface IngestBody {
   rawLabel: string;
   rawCategory?: string;
   rawIdentity?: string;
+  idempotencyKey: string;
   payload: {
     usageCount: number;
     usageDurationMs: number;
@@ -25,6 +26,8 @@ function isValidBody(body: any): body is IngestBody {
     typeof body?.sourceId === 'string' &&
     typeof body?.sourceLabel === 'string' &&
     typeof body?.rawLabel === 'string' &&
+    typeof body?.idempotencyKey === 'string' &&
+    body.idempotencyKey.length > 0 &&
     typeof body?.payload === 'object' &&
     typeof body?.payload?.usageCount === 'number' &&
     typeof body?.payload?.usageDurationMs === 'number' &&
@@ -49,9 +52,25 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
   const body = req.body;
   const now = new Date().toISOString();
 
+  const existing = await db
+    .collection('observations')
+    .where('createdBy', '==', uid)
+    .where('idempotencyKey', '==', body.idempotencyKey)
+    .limit(1)
+    .get();
+
+  if (!existing.empty) {
+    // Already ingested — this is a retry of a partially-failed batch.
+    // Returning 200 here (not re-writing) keeps the worker's retry loop
+    // simple: every record in the batch either succeeds or is confirmed
+    // already-succeeded, with no duplicate stagingItems/observations pair.
+    res.status(200).json({ ok: true, deduped: true });
+    return;
+  }
+
   const deviceSourceId = await findOrCreateDeviceSource(db, uid, body.sourceId, body.collector, body.sourceLabel);
 
-  await db.collection('stagingItems').add({
+  const stagingRef = await db.collection('stagingItems').add({
     rawLabel: body.rawLabel,
     rawCategory: body.rawCategory ?? null,
     rawIdentity: body.rawIdentity ?? null,
@@ -69,7 +88,9 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
 
   await db.collection('observations').add({
     registryItemId: null,
+    stagingItemId: stagingRef.id,
     deviceSourceId,
+    idempotencyKey: body.idempotencyKey,
     collector: body.collector,
     observedAt: now,
     windowHours: body.payload.windowHours,

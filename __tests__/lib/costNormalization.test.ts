@@ -20,3 +20,7 @@ test('weekly cost multiplies by 4.33', () => {
 test('one-time cost normalizes to zero', () => {
   expect(monthlyEquivalent(500, BillingCycle.OneTime)).toBe(0);
 });
+
+test('an unrecognized billingCycle (bad data bypassing the type system) normalizes to zero, not the raw cost', () => {
+  expect(monthlyEquivalent(500, 'not_a_real_cycle' as BillingCycle)).toBe(0);
+});

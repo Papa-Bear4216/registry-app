@@ -26,9 +26,16 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
   const updates: any[] = [];
   const fakeDoc = { id: 'staging-1', data: () => ({ rawLabel: 'Netflix', rawCategory: 'Entertainment', rawIdentity: null, collector: CollectorType.Gmail, createdBy: 'alice' }), ref: { update: async (data: any) => updates.push(data) } };
   const fakeDb: any = {
-    collection: () => ({
-      where: () => ({ where: () => ({ limit: () => ({ get: async () => ({ empty: true, docs: [] }) }) }), get: async () => ({ docs: [] }) }),
-    }),
+    collection: (name: string) => {
+      if (name === 'observations') {
+        // No match resolved in this test (suggestedMatchId: null), so the
+        // backfill branch is never reached — this query should not be called.
+        return { where: () => ({ get: async () => { throw new Error('observations should not be queried when no match is resolved'); } }) };
+      }
+      return {
+        where: () => ({ where: () => ({ limit: () => ({ get: async () => ({ empty: true, docs: [] }) }) }), get: async () => ({ docs: [] }) }),
+      };
+    },
   };
   // This fake OpenAI client backs two distinct calls inside processStagingItem, in order:
   // findFuzzyMatch (expects { suggestedMatchId, confidence: 'low' | 'confirmed' }), then
@@ -52,4 +59,50 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
   expect(updates[0].classifiedKind).toBe('subscription');
   expect(typeof updates[0].classifiedAt).toBe('string');
   expect(updates[0].classifiedAt).not.toBeNull();
+});
+
+test('processStagingItem backfills registryItemId on the originating observation when an exact match is resolved', async () => {
+  const stagingUpdates: any[] = [];
+  const observationUpdates: any[] = [];
+  const fakeDoc = {
+    id: 'staging-1',
+    data: () => ({ rawLabel: 'Todoist', rawCategory: null, rawIdentity: 'com.todoist', collector: CollectorType.PhoneUsage, createdBy: 'alice' }),
+    ref: { update: async (data: any) => stagingUpdates.push(data) },
+  };
+  const fakeDb: any = {
+    collection: (name: string) => {
+      if (name === 'registryItems') {
+        // findExactMatch: where(createdBy).where(canonicalIdentity).limit(1).get()
+        return {
+          where: () => ({
+            where: () => ({
+              limit: () => ({ get: async () => ({ empty: false, docs: [{ id: 'item-42' }] }) }),
+            }),
+          }),
+        };
+      }
+      if (name === 'observations') {
+        return {
+          where: (field: string, op: string, value: string) => ({
+            get: async () => {
+              expect(field).toBe('stagingItemId');
+              expect(value).toBe('staging-1');
+              return { docs: [{ ref: { update: async (d: any) => observationUpdates.push(d) } }] };
+            },
+          }),
+        };
+      }
+      throw new Error(`unexpected collection: ${name}`);
+    },
+  };
+  const fakeOpenai: any = {
+    chat: { completions: { create: async () => ({
+      choices: [{ message: { content: JSON.stringify({ kind: 'app', category: 'productivity', active: true, confidence: 0.9 }) } }],
+    }) } },
+  };
+
+  await processStagingItem(fakeOpenai, fakeDb, fakeDoc as any);
+
+  expect(stagingUpdates[0].suggestedMatch).toBe('item-42');
+  expect(observationUpdates).toEqual([{ registryItemId: 'item-42' }]);
 });

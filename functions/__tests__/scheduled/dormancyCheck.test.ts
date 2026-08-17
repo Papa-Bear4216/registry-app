@@ -10,6 +10,7 @@ function fakeCollectionOf(seedDocs: Array<{ id: string; fields: Record<string, a
         if (op !== '==') throw new Error(`unsupported op in fake: ${op}`);
         return makeQuery(docs.filter((d) => d.fields[field] === value));
       },
+      limit: (n: number) => makeQuery(docs.slice(0, n)),
       get: async () => ({
         docs: docs.map((d) => ({ id: d.id, data: () => d.fields })),
       }),
@@ -84,4 +85,20 @@ test('skips items that were successfully classified and are only awaiting user r
   await runRetrySweep({} as any, fakeDb, fakeProcessFn);
 
   expect(processed).toEqual(['never-classified']);
+});
+
+test('caps the sweep at 50 items per run even when more are stuck', async () => {
+  const seed = Array.from({ length: 75 }, (_, i) => ({
+    id: `stuck-${i}`,
+    fields: { rawLabel: `App ${i}`, resolved: false, classifiedAt: null },
+  }));
+  const processed: string[] = [];
+  const fakeDb: any = { collection: () => fakeCollectionOf(seed) };
+  const fakeProcessFn = async (openai: any, db: any, doc: any) => {
+    processed.push(doc.id);
+  };
+
+  await runRetrySweep({} as any, fakeDb, fakeProcessFn);
+
+  expect(processed).toHaveLength(50);
 });

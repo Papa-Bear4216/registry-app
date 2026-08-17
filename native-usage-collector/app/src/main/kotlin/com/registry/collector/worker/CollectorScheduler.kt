@@ -34,8 +34,8 @@ object CollectorScheduler {
         val request = PeriodicWorkRequestBuilder<UsageCollectorWorker>(
             repeatInterval = 6,
             repeatIntervalTimeUnit = TimeUnit.HOURS,
-            flexInterval = 30,
-            flexIntervalTimeUnit = TimeUnit.MINUTES,
+            flexTimeInterval = 30,
+            flexTimeIntervalUnit = TimeUnit.MINUTES,
         )
             .setConstraints(constraints)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 15, TimeUnit.MINUTES)

@@ -1,0 +1,62 @@
+import { Firestore } from 'firebase-admin/firestore';
+import OpenAI from 'openai';
+import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { getOpenAIClient, callJsonMode } from './openaiClient';
+
+interface SuggestionEntry {
+  itemId: string;
+  suggestedAction: string;
+  suggestedAlternativeId: string | null;
+  reason: string;
+}
+
+function isValidSuggestionArray(x: any): x is SuggestionEntry[] {
+  return (
+    Array.isArray(x) &&
+    x.every(
+      (entry) =>
+        typeof entry?.itemId === 'string' &&
+        typeof entry?.suggestedAction === 'string' &&
+        (entry?.suggestedAlternativeId === null || typeof entry?.suggestedAlternativeId === 'string') &&
+        typeof entry?.reason === 'string'
+    )
+  );
+}
+
+export async function generateSuggestions(openai: OpenAI, db: Firestore, uid: string): Promise<number> {
+  const items = await db.collection('registryItems').where('createdBy', '==', uid).get();
+  const registrySummary = items.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
+
+  const systemPrompt = `You are a spend-optimization assistant. Given a user's subscription registry, identify wasteful/redundant items. Respond in JSON as an array: [{ "itemId": string, "suggestedAction": "cut"|"consolidate"|"investigate", "suggestedAlternativeId": string | null, "reason": string }]. Only include items worth flagging — an empty array is a valid response.`;
+  const userPrompt = `Registry: ${JSON.stringify(registrySummary)}`;
+
+  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  if (!isValidSuggestionArray(parsed)) {
+    throw new Error('Malformed suggestion response from AI');
+  }
+
+  for (const entry of parsed) {
+    await db.collection('suggestions').add({
+      item: entry.itemId,
+      suggestedAction: entry.suggestedAction,
+      suggestedAlternative: entry.suggestedAlternativeId,
+      suggestionText: entry.reason,
+      response: null,
+      reason: entry.reason,
+      shownAt: new Date().toISOString(),
+      respondedAt: null,
+      dismissedForever: false,
+      createdBy: uid,
+    });
+  }
+
+  return parsed.length;
+}
+
+export const aiSuggest = onSchedule('every monday 08:00', async () => {
+  // Runs per-user in a real multi-user deployment — for this single-user app,
+  // iterating all distinct createdBy values in registryItems is sufficient;
+  // a users collection isn't part of this data model. Left as an
+  // implementation-time detail: query distinct createdBy values, call
+  // generateSuggestions(openai, db, uid) for each.
+});

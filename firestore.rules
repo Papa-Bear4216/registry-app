@@ -33,5 +33,15 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource);
       allow update: if isOwner(resource) && isOwnerOnCreate();
     }
+    match /suggestions/{suggestionId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
+    match /taskRankings/{rankingId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
   }
 }

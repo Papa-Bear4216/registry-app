@@ -69,3 +69,35 @@ test('owner cannot reassign createdBy on a deviceSource update', async () => {
   });
   await assertFails(updateDoc(doc(alice, 'deviceSources/device1'), { createdBy: 'bob' }));
 });
+
+test('owner can create and read their own suggestion', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const suggestionRef = doc(alice, 'suggestions/suggestion1');
+  await assertSucceeds(setDoc(suggestionRef, { item: 'item1', suggestedAction: 'cut', createdBy: 'alice' }));
+  await assertSucceeds(getDoc(suggestionRef));
+});
+
+test('non-owner cannot read another user\'s suggestion', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const bob = testEnv.authenticatedContext('bob').firestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'suggestions/suggestion1'), { item: 'item1', suggestedAction: 'cut', createdBy: 'alice' });
+  });
+  await assertFails(getDoc(doc(bob, 'suggestions/suggestion1')));
+});
+
+test('owner can create and read their own taskRanking', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const rankingRef = doc(alice, 'taskRankings/ranking1');
+  await assertSucceeds(setDoc(rankingRef, { taskCategory: 'writing', createdBy: 'alice' }));
+  await assertSucceeds(getDoc(rankingRef));
+});
+
+test('non-owner cannot read another user\'s taskRanking', async () => {
+  const alice = testEnv.authenticatedContext('alice').firestore();
+  const bob = testEnv.authenticatedContext('bob').firestore();
+  await testEnv.withSecurityRulesDisabled(async (ctx) => {
+    await setDoc(doc(ctx.firestore(), 'taskRankings/ranking1'), { taskCategory: 'writing', createdBy: 'alice' });
+  });
+  await assertFails(getDoc(doc(bob, 'taskRankings/ranking1')));
+});

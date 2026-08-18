@@ -81,7 +81,10 @@ export async function processStagingItem(genai: GoogleGenAI, db: Firestore, doc:
 }
 
 export const aiClassify = onDocumentCreated(
-  { document: 'stagingItems/{stagingItemId}', secrets: [geminiApiKey] },
+  // A staging item can involve two sequential Gemini calls (fuzzy match +
+  // classify), each with its own retry-on-429 backoff — default 60s isn't
+  // enough headroom when a device sync fans out many staging items at once.
+  { document: 'stagingItems/{stagingItemId}', secrets: [geminiApiKey], timeoutSeconds: 120 },
   async (event) => {
   const snapshot = event.data;
   if (!snapshot) return;

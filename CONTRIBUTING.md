@@ -1,5 +1,21 @@
 # Contributing
 
+## The SecondGuess app suite
+
+This repo builds three separate, independently installable apps that share one
+Firebase backend (project `registry-app-prod-7a07c`):
+
+| App | Location | Role |
+|---|---|---|
+| **SecondGuess** | repo root (React Native/Expo) | Primary UI — manage your registry |
+| **contextual-coach** | `contextual-coach/` (native Android) | On-device gap-nudge coach (Gemini Nano) |
+| **native-usage-collector** | `native-usage-collector/` (native Android) | Background app-usage collector, feeds the other two |
+
+They don't call each other directly or share a process — each is its own APK,
+coordinating only through Firestore/Cloud Functions:
+`native-usage-collector` → Cloud Functions (`aiClassify`/`aiRank`) → Firestore ←
+read by both `contextual-coach` and SecondGuess.
+
 ## First-time setup
 
 This repo has three sub-projects, and all three need Firebase credentials that are
@@ -7,7 +23,7 @@ gitignored (they're per-project secrets, not code). None of them will build with
 these — you'll need to obtain them from whoever manages the Firebase project, or
 create your own Firebase project for local development.
 
-### 1. React Native app (repo root)
+### 1. SecondGuess — React Native app (repo root)
 
 Copy `.env.example` to `.env` and fill in the values from Firebase Console
 (Project Settings → General → Your apps → Web app → SDK setup and configuration):

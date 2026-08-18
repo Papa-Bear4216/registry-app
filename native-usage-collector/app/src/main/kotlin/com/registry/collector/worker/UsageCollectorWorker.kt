@@ -3,6 +3,7 @@ package com.registry.collector.worker
 import android.content.Context
 import android.os.Build
 import android.provider.Settings
+import android.util.Log
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -42,12 +43,16 @@ class UsageCollectorWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         // 1. Verify Firebase Auth — must be signed in
-        val user = FirebaseAuth.getInstance().currentUser ?: return Result.failure()
+        val user = FirebaseAuth.getInstance().currentUser ?: run {
+            Log.w(TAG, "doWork: no signed-in FirebaseAuth user, failing")
+            return Result.failure()
+        }
 
         // 2. Get fresh ID token
         val idToken = try {
             user.getIdToken(false).await().token ?: return Result.failure()
         } catch (e: Exception) {
+            Log.w(TAG, "getIdToken failed: ${e.javaClass.simpleName}: ${e.message}")
             return Result.retry()
         }
 
@@ -83,11 +88,13 @@ class UsageCollectorWorker @AssistedInject constructor(
                 ingestApiService.postObservation(idToken, body)
             }
         } catch (e: IngestApiException) {
+            Log.w(TAG, "ingest POST failed: HTTP ${e.statusCode}: ${e.message}")
             // 4xx errors (bad payload) — don't retry with same data, it won't help
             if (e.statusCode in 400..499) return Result.failure()
             // 5xx — server error, retry is reasonable
             return Result.retry()
         } catch (e: Exception) {
+            Log.w(TAG, "ingest POST failed: ${e.javaClass.simpleName}: ${e.message}")
             // Network failure — retry (WorkManager handles exponential backoff)
             return Result.retry()
         }
@@ -113,6 +120,7 @@ class UsageCollectorWorker @AssistedInject constructor(
     companion object {
         /** Default first-run window: 6 hours back from now */
         private const val DEFAULT_WINDOW_MS = 6 * 60 * 60 * 1000L
+        private const val TAG = "UsageCollectorWorker"
     }
 }
 

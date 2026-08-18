@@ -29,6 +29,18 @@ android {
         viewBinding = true
     }
 
+    signingConfigs {
+        getByName("debug") {
+            // AGP's auto-generated debug keystore — fine for sideloading to a
+            // physical test device. Real Play distribution needs a real
+            // upload key (tracked in the Play-readiness checklist).
+            storeFile = file(System.getProperty("user.home") + "/.android/debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
+    }
+
     buildTypes {
         debug {
             // Point to emulator during local development
@@ -37,6 +49,7 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 

@@ -14,7 +14,10 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.textfield.TextInputEditText
+import com.google.android.material.textfield.TextInputLayout
 import com.google.firebase.auth.FirebaseAuth
 import com.registry.collector.R
 import com.registry.collector.data.SyncPreferences
@@ -72,20 +75,43 @@ class MainActivity : AppCompatActivity() {
             setPadding(padding, padding, padding, padding)
         }
 
+        // This device draws edge-to-edge by default, so without this the root
+        // layout's content (starting with the "Email" label) renders underneath
+        // the status bar and is clipped/illegible. Pad the root by the actual
+        // system bar insets instead of a fixed guess.
+        ViewCompat.setOnApplyWindowInsetsListener(root) { view, insets ->
+            val bars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+            view.setPadding(padding + bars.left, padding + bars.top, padding + bars.right, padding + bars.bottom)
+            insets
+        }
+
         // --- Auth Section (sign-in form) ---
+        // TextInputEditText must be the child of a TextInputLayout — used bare
+        // (as this was before), it has no Material theming to derive its text/
+        // hint color from and can render illegibly (e.g. dark-on-dark) depending
+        // on the device theme. TextInputLayout also gives us a proper floating
+        // label instead of a hint that disappears on focus.
         authSection = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        emailInput = TextInputEditText(this).apply { hint = "Email" }
-        passwordInput = TextInputEditText(this).apply {
+        val emailLayout = TextInputLayout(this).apply { hint = "Email" }
+        emailInput = TextInputEditText(emailLayout.context)
+        emailLayout.addView(emailInput)
+
+        val passwordLayout = TextInputLayout(this).apply {
             hint = "Password"
+            endIconMode = TextInputLayout.END_ICON_PASSWORD_TOGGLE
+        }
+        passwordInput = TextInputEditText(passwordLayout.context).apply {
             inputType = android.text.InputType.TYPE_CLASS_TEXT or
                 android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
         }
+        passwordLayout.addView(passwordInput)
+
         signInButton = Button(this).apply {
             text = getString(R.string.sign_in)
             setOnClickListener { signIn() }
         }
-        authSection.addView(emailInput)
-        authSection.addView(passwordInput)
+        authSection.addView(emailLayout)
+        authSection.addView(passwordLayout)
         authSection.addView(signInButton)
 
         // --- Signed-in Section ---
@@ -169,9 +195,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signIn() {
-        val email = emailInput.text?.toString()?.trim() ?: return
-        val password = passwordInput.text?.toString() ?: return
-        if (email.isEmpty() || password.isEmpty()) return
+        val email = emailInput.text?.toString()?.trim().orEmpty()
+        val password = passwordInput.text?.toString().orEmpty()
+        if (email.isEmpty() || password.isEmpty()) {
+            Toast.makeText(this, "Enter email and password", Toast.LENGTH_SHORT).show()
+            return
+        }
 
         auth.signInWithEmailAndPassword(email, password)
             .addOnSuccessListener { updateUI() }

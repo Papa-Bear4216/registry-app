@@ -1,10 +1,13 @@
 package com.registry.coach.evaluator
 
 import android.view.accessibility.AccessibilityNodeInfo
+import com.google.mlkit.genai.prompt.Generation
 import com.registry.coach.data.CachedTaskRanking
 import com.registry.coach.data.TaskCategory
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 
 /**
  * On-device Gemini Nano implementation of [GapEvaluator].
@@ -28,6 +31,13 @@ class GeminiNanoGapEvaluator @Inject constructor() : GapEvaluator {
         const val DWELL_THRESHOLD_SECONDS = 10L
     }
 
+    @Serializable
+    internal data class GapVerdict(
+        val isGap: Boolean,
+        val confidence: Double,
+        val detectedCategory: String,
+    )
+
     override suspend fun evaluate(
         screenContent: AccessibilityNodeInfo,
         candidateRanking: CachedTaskRanking,
@@ -39,32 +49,68 @@ class GeminiNanoGapEvaluator @Inject constructor() : GapEvaluator {
             val screenText = extractVisibleText(screenContent)
             // screenContent reference is NOT stored beyond this point
 
-            // TODO: Wire up actual GenerativeModel call when AICore SDK is available.
-            // The prompt instructs Gemini Nano to:
-            // 1. Classify visible content into a TaskCategory
-            // 2. Confirm whether detected category matches the candidate ranking
-            // 3. Return JSON: { "isGap": boolean, "confidence": number, "detectedCategory": string }
-            //
-            // For now, return NoGap — the scaffold is structurally correct but
-            // the AI inference is stubbed until a real AICore device is available.
-            //
-            // val prompt = buildPrompt(screenText, candidateRanking, currentPackage)
-            // val response = model.generateContent(prompt)
-            // val parsed = parseResponse(response.text ?: return GapResult.NoGap)
-            //
-            // if (parsed.isGap && parsed.confidence > GAP_THRESHOLD) {
-            //     GapResult.RealGap(...)
-            // } else {
-            //     GapResult.NoGap
-            // }
+            val prompt = buildPrompt(screenText, candidateRanking, currentPackage)
+            val model = Generation.getClient()
+            val response = model.generateContent(prompt)
+            val raw = response.candidates.firstOrNull()?.text ?: return GapResult.NoGap
+            // screenText/raw go out of scope after this line — never stored, never logged
 
-            // screenText goes out of scope — never stored, never logged
+            val verdict = parseVerdict(raw) ?: return GapResult.NoGap
+            val detectedCategory = TaskCategory.fromWire(verdict.detectedCategory)
 
-            // Stub: always return NoGap until AICore is wired
-            GapResult.NoGap
+            // Guard against a hallucinated category the same way dedupMatch.ts
+            // guards hallucinated ids — reject, don't coerce.
+            if (detectedCategory != candidateRanking.taskCategory) {
+                return GapResult.NoGap
+            }
+
+            if (verdict.isGap && verdict.confidence > GAP_THRESHOLD) {
+                GapResult.RealGap(
+                    suggestedAppName = candidateRanking.bestItemName,
+                    taskCategory = candidateRanking.taskCategory,
+                    usageFactText = formatUsageFact(candidateRanking.taskCategory, sessionMinutesInCategory),
+                )
+            } else {
+                GapResult.NoGap
+            }
         } catch (e: Exception) {
             // Section 6: AICore failure -> NoGap, no retry, no crash
             GapResult.NoGap
+        }
+    }
+
+    /**
+     * Builds the classification prompt. Instructs the model to respond with
+     * ONLY a JSON object matching [GapVerdict] — no structured-output API is
+     * used (that surface is alpha-only), so the response is parsed manually.
+     */
+    private fun buildPrompt(
+        screenText: String,
+        candidateRanking: CachedTaskRanking,
+        currentPackage: String,
+    ): String {
+        return """
+            You are classifying the on-screen content of an Android app to detect
+            whether the user is doing a task better suited to a different app.
+
+            Current app package: $currentPackage
+            Candidate better-suited task category: ${candidateRanking.taskCategory.wire}
+            Visible on-screen text: $screenText
+
+            Respond with ONLY a JSON object, no other text, matching this shape:
+            {"isGap": boolean, "confidence": number between 0 and 1, "detectedCategory": one of "writing","coding","communication","design","productivity","media","finance","utilities","other"}
+        """.trimIndent()
+    }
+
+    /** Returns null on any malformed/non-JSON response — caller maps that to NoGap. */
+    internal fun parseVerdict(raw: String): GapVerdict? {
+        return try {
+            val jsonStart = raw.indexOf('{')
+            val jsonEnd = raw.lastIndexOf('}')
+            if (jsonStart == -1 || jsonEnd == -1 || jsonEnd < jsonStart) return null
+            Json.decodeFromString<GapVerdict>(raw.substring(jsonStart, jsonEnd + 1))
+        } catch (e: Exception) {
+            null
         }
     }
 

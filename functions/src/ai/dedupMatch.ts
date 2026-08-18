@@ -1,7 +1,7 @@
 import { Firestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { MatchConfidence } from '../types/enums';
-import { callJsonMode } from './openaiClient';
+import { callJsonMode } from './genaiClient';
 
 export async function findExactMatch(
   db: Firestore,
@@ -33,7 +33,7 @@ function isValidFuzzyMatchResponse(x: any): x is FuzzyMatchResponse {
 }
 
 export async function findFuzzyMatch(
-  openai: OpenAI,
+  genai: GoogleGenAI,
   db: Firestore,
   uid: string,
   rawLabel: string
@@ -44,7 +44,7 @@ export async function findFuzzyMatch(
   const systemPrompt = `You match a newly discovered subscription/tool name against a user's existing registry. Respond in JSON: { "suggestedMatchId": string | null, "confidence": "low" | "confirmed" }. Return null if no candidate plausibly refers to the same tool.`;
   const userPrompt = `New item: "${rawLabel}"\nExisting registry: ${JSON.stringify(candidates)}`;
 
-  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  const parsed = await callJsonMode(genai, systemPrompt, userPrompt);
   if (!isValidFuzzyMatchResponse(parsed)) {
     throw new Error('Malformed fuzzy-match response from AI');
   }

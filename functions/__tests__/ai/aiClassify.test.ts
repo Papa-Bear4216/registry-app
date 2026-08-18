@@ -2,24 +2,24 @@ import { classifyStagingItem, processStagingItem } from '../../src/ai/aiClassify
 import { CollectorType, MatchConfidence } from '../../src/types/enums';
 
 test('classifyStagingItem returns a validated classification from a well-formed AI response', async () => {
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 }),
+    }) },
   };
   const stagingItem = { rawLabel: 'Netflix', rawCategory: 'Entertainment' } as any;
-  const result = await classifyStagingItem(fakeOpenai, stagingItem);
+  const result = await classifyStagingItem(fakeGenai, stagingItem);
   expect(result).toEqual({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 });
 });
 
 test('classifyStagingItem throws on a malformed AI response (missing required field)', async () => {
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ kind: 'subscription' }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ kind: 'subscription' }),
+    }) },
   };
   const stagingItem = { rawLabel: 'Netflix', rawCategory: 'Entertainment' } as any;
-  await expect(classifyStagingItem(fakeOpenai, stagingItem)).rejects.toThrow();
+  await expect(classifyStagingItem(fakeGenai, stagingItem)).rejects.toThrow();
 });
 
 test('processStagingItem writes structured fields and leaves resolved=false for user review', async () => {
@@ -37,7 +37,7 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
       };
     },
   };
-  // This fake OpenAI client backs two distinct calls inside processStagingItem, in order:
+  // This fake Gemini client backs two distinct calls inside processStagingItem, in order:
   // findFuzzyMatch (expects { suggestedMatchId, confidence: 'low' | 'confirmed' }), then
   // classifyStagingItem (expects { kind, category, active, confidence: number }). Their
   // `confidence` shapes conflict, so respond differently per call rather than reusing one fixture.
@@ -46,13 +46,13 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
     { suggestedMatchId: null, confidence: 'low' },
     { kind: 'subscription', category: 'media', active: true, confidence: 0.9 },
   ];
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify(responses[callCount++]) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify(responses[callCount++]),
+    }) },
   };
 
-  await processStagingItem(fakeOpenai, fakeDb, fakeDoc as any);
+  await processStagingItem(fakeGenai, fakeDb, fakeDoc as any);
 
   expect(updates).toHaveLength(1);
   expect(updates[0].resolved).toBe(false);
@@ -95,13 +95,13 @@ test('processStagingItem backfills registryItemId on the originating observation
       throw new Error(`unexpected collection: ${name}`);
     },
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ kind: 'app', category: 'productivity', active: true, confidence: 0.9 }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ kind: 'app', category: 'productivity', active: true, confidence: 0.9 }),
+    }) },
   };
 
-  await processStagingItem(fakeOpenai, fakeDb, fakeDoc as any);
+  await processStagingItem(fakeGenai, fakeDb, fakeDoc as any);
 
   expect(stagingUpdates[0].suggestedMatch).toBe('item-42');
   expect(observationUpdates).toEqual([{ registryItemId: 'item-42' }]);

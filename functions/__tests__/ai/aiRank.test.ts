@@ -24,13 +24,13 @@ test('parses a well-formed ranking and writes a taskRankings doc, sets isBestFor
       };
     },
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ orderedItemIds: ['item-1', 'item-2'], bestItemId: 'item-1' }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ orderedItemIds: ['item-1', 'item-2'], bestItemId: 'item-1' }),
+    }) },
   };
 
-  await rankCategory(fakeOpenai, fakeDb, 'alice', 'coding');
+  await rankCategory(fakeGenai, fakeDb, 'alice', 'coding');
 
   expect(written).toHaveLength(1);
   expect(written[0].orderedItems).toEqual(['item-1', 'item-2']);
@@ -51,12 +51,12 @@ test('throws on a malformed ranking response (missing bestItemId) and does not p
       add: async (data: any) => { written.push(data); return { id: 'ranking-1' }; },
     }),
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ orderedItemIds: ['item-1'] }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ orderedItemIds: ['item-1'] }),
+    }) },
   };
-  await expect(rankCategory(fakeOpenai, fakeDb, 'alice', 'coding')).rejects.toThrow();
+  await expect(rankCategory(fakeGenai, fakeDb, 'alice', 'coding')).rejects.toThrow();
   expect(written).toHaveLength(0);
   expect(updated).toHaveLength(0);
 });
@@ -75,13 +75,13 @@ test('rejects a bestItemId not present among the candidates (hallucinated id)', 
       add: async (data: any) => { written.push(data); return { id: 'ranking-1' }; },
     }),
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ orderedItemIds: ['item-1', 'item-2'], bestItemId: 'item-999-hallucinated' }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ orderedItemIds: ['item-1', 'item-2'], bestItemId: 'item-999-hallucinated' }),
+    }) },
   };
 
-  await expect(rankCategory(fakeOpenai, fakeDb, 'alice', 'coding')).rejects.toThrow(
+  await expect(rankCategory(fakeGenai, fakeDb, 'alice', 'coding')).rejects.toThrow(
     'AI ranking response referenced an item id not in the candidate set'
   );
   expect(written).toHaveLength(0);
@@ -118,13 +118,13 @@ test('updates the existing taskRankings doc instead of creating a duplicate', as
       };
     },
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ orderedItemIds: ['item-1'], bestItemId: 'item-1' }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ orderedItemIds: ['item-1'], bestItemId: 'item-1' }),
+    }) },
   };
 
-  await rankCategory(fakeOpenai, fakeDb, 'alice', 'coding');
+  await rankCategory(fakeGenai, fakeDb, 'alice', 'coding');
 
   expect(updatedRanking).toHaveLength(1);
   expect(updatedRanking[0].orderedItems).toEqual(['item-1']);

@@ -15,9 +15,9 @@ test('creates one stagingItem per matched receipt email', async () => {
     listMessages: async () => [{ id: 'msg1', subject: 'Your Spotify receipt', snippet: '...' }],
     getMessageBody: async () => 'Thanks for being a Spotify subscriber.',
   };
-  const fakeOpenai: any = {};
+  const fakeGenai: any = {};
 
-  const result = await handleGmailScan(fakeDb, fakeOpenai, fakeGmailClient, 'alice');
+  const result = await handleGmailScan(fakeDb, fakeGenai, fakeGmailClient, 'alice');
 
   expect(result.stagingItemsCreated).toBe(1);
   expect(stagingItems).toHaveLength(1);
@@ -41,9 +41,9 @@ test('one message throwing during processing does not abort the rest of the scan
     ],
     getMessageBody: async () => 'body',
   };
-  const fakeOpenai: any = {};
+  const fakeGenai: any = {};
 
-  const result = await handleGmailScan(fakeDb, fakeOpenai, fakeGmailClient, 'alice');
+  const result = await handleGmailScan(fakeDb, fakeGenai, fakeGmailClient, 'alice');
 
   expect(result.stagingItemsCreated).toBe(1);
   expect(stagingItems).toHaveLength(1);

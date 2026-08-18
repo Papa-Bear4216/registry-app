@@ -1,7 +1,7 @@
 import { Firestore, DocumentSnapshot } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { getOpenAIClient, callJsonMode } from './openaiClient';
+import { getGenaiClient, callJsonMode, geminiApiKey } from './genaiClient';
 import { findExactMatch, findFuzzyMatch } from './dedupMatch';
 import { StagingItem } from '../types/models';
 
@@ -21,18 +21,18 @@ function isValidClassification(x: any): x is ClassificationResult {
   );
 }
 
-export async function classifyStagingItem(openai: OpenAI, stagingItem: Pick<StagingItem, 'rawLabel' | 'rawCategory'>): Promise<ClassificationResult> {
+export async function classifyStagingItem(genai: GoogleGenAI, stagingItem: Pick<StagingItem, 'rawLabel' | 'rawCategory'>): Promise<ClassificationResult> {
   const systemPrompt = `Classify a subscription/tool. Respond in JSON: { "kind": one of "app"|"subscription"|"dev_tool"|"service"|"hardware"|"other", "category": one of "writing"|"coding"|"communication"|"design"|"productivity"|"media"|"finance"|"utilities"|"other", "active": boolean (is this a real recurring cost, not a one-off), "confidence": number 0-1 }`;
   const userPrompt = `Name: "${stagingItem.rawLabel}"\nCategory hint: "${stagingItem.rawCategory ?? 'none'}"`;
 
-  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  const parsed = await callJsonMode(genai, systemPrompt, userPrompt);
   if (!isValidClassification(parsed)) {
     throw new Error('Malformed classification response from AI');
   }
   return parsed;
 }
 
-export async function processStagingItem(openai: OpenAI, db: Firestore, doc: DocumentSnapshot): Promise<void> {
+export async function processStagingItem(genai: GoogleGenAI, db: Firestore, doc: DocumentSnapshot): Promise<void> {
   const data = doc.data() as StagingItem;
 
   let suggestedMatch: string | null = null;
@@ -46,14 +46,14 @@ export async function processStagingItem(openai: OpenAI, db: Firestore, doc: Doc
     }
   }
   if (!suggestedMatch) {
-    const fuzzy = await findFuzzyMatch(openai, db, data.createdBy, data.rawLabel);
+    const fuzzy = await findFuzzyMatch(genai, db, data.createdBy, data.rawLabel);
     if (fuzzy) {
       suggestedMatch = fuzzy.id;
       suggestionConfidence = fuzzy.confidence;
     }
   }
 
-  const classification = await classifyStagingItem(openai, data);
+  const classification = await classifyStagingItem(genai, data);
 
   await doc.ref.update({
     suggestedMatch,
@@ -80,13 +80,15 @@ export async function processStagingItem(openai: OpenAI, db: Firestore, doc: Doc
   }
 }
 
-export const aiClassify = onDocumentCreated('stagingItems/{stagingItemId}', async (event) => {
+export const aiClassify = onDocumentCreated(
+  { document: 'stagingItems/{stagingItemId}', secrets: [geminiApiKey] },
+  async (event) => {
   const snapshot = event.data;
   if (!snapshot) return;
-  const openai = getOpenAIClient();
+  const genai = getGenaiClient();
   const db = snapshot.ref.firestore;
   try {
-    await processStagingItem(openai, db, snapshot);
+    await processStagingItem(genai, db, snapshot);
   } catch (e) {
     console.error(`aiClassify failed for staging item ${snapshot.id}:`, e);
     // Leave resolved: false unmodified — Task 6's daily sweep will retry.

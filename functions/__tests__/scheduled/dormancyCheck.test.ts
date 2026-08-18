@@ -28,9 +28,9 @@ test('re-processes stagingItems where resolved is false and classifiedAt is null
   const fakeProcessFn = async (openai: any, db: any, doc: any) => {
     processed.push(doc.id);
   };
-  const fakeOpenai: any = {};
+  const fakeGenai: any = {};
 
-  await runRetrySweep(fakeOpenai, fakeDb, fakeProcessFn);
+  await runRetrySweep(fakeGenai, fakeDb, fakeProcessFn);
 
   expect(processed).toEqual(['stuck-item']);
 });

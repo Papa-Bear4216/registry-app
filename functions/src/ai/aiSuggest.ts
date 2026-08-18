@@ -1,7 +1,7 @@
 import { Firestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { getOpenAIClient, callJsonMode } from './openaiClient';
+import { getGenaiClient, callJsonMode, geminiApiKey } from './genaiClient';
 
 interface SuggestionEntry {
   itemId: string;
@@ -29,14 +29,14 @@ function isValidSuggestionResponse(x: any): x is SuggestionResponse {
   );
 }
 
-export async function generateSuggestions(openai: OpenAI, db: Firestore, uid: string): Promise<number> {
+export async function generateSuggestions(genai: GoogleGenAI, db: Firestore, uid: string): Promise<number> {
   const items = await db.collection('registryItems').where('createdBy', '==', uid).get();
   const registrySummary = items.docs.map((d) => ({ id: d.id, ...(d.data() as any) }));
 
   const systemPrompt = `You are a spend-optimization assistant. Given a user's subscription registry, identify wasteful/redundant items. Respond in JSON as an object: { "suggestions": [{ "itemId": string, "suggestedAction": "cut"|"consolidate"|"investigate", "suggestedAlternativeId": string | null, "reason": string }] }. Only include items worth flagging — an empty array is a valid response.`;
   const userPrompt = `Registry: ${JSON.stringify(registrySummary)}`;
 
-  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  const parsed = await callJsonMode(genai, systemPrompt, userPrompt);
   if (!isValidSuggestionResponse(parsed)) {
     throw new Error('Malformed suggestion response from AI');
   }
@@ -60,10 +60,10 @@ export async function generateSuggestions(openai: OpenAI, db: Firestore, uid: st
   return suggestions.length;
 }
 
-export const aiSuggest = onSchedule('every monday 08:00', async () => {
+export const aiSuggest = onSchedule({ schedule: 'every monday 08:00', secrets: [geminiApiKey] }, async () => {
   // Runs per-user in a real multi-user deployment — for this single-user app,
   // iterating all distinct createdBy values in registryItems is sufficient;
   // a users collection isn't part of this data model. Left as an
   // implementation-time detail: query distinct createdBy values, call
-  // generateSuggestions(openai, db, uid) for each.
+  // generateSuggestions(genai, db, uid) for each.
 });

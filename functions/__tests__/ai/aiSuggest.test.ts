@@ -8,13 +8,13 @@ test('parses a well-formed suggestion array and writes one suggestion doc per en
       add: async (data: any) => { created.push(data); return { id: 'suggestion-1' }; },
     }),
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ suggestions: [{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }] }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ suggestions: [{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }] }),
+    }) },
   };
 
-  const count = await generateSuggestions(fakeOpenai, fakeDb, 'alice');
+  const count = await generateSuggestions(fakeGenai, fakeDb, 'alice');
 
   expect(count).toBe(1);
   expect(created).toHaveLength(1);
@@ -31,12 +31,12 @@ test('throws on a malformed suggestion response (bare array, missing the object 
       add: async (data: any) => { created.push(data); return { id: 'suggestion-1' }; },
     }),
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify([{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }]) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify([{ itemId: 'item-1', suggestedAction: 'cut', suggestedAlternativeId: null, reason: 'Unused for 45 days' }]),
+    }) },
   };
-  await expect(generateSuggestions(fakeOpenai, fakeDb, 'alice')).rejects.toThrow();
+  await expect(generateSuggestions(fakeGenai, fakeDb, 'alice')).rejects.toThrow();
   expect(created).toHaveLength(0);
 });
 
@@ -48,11 +48,11 @@ test('throws on a malformed suggestion entry inside a correctly-wrapped response
       add: async (data: any) => { created.push(data); return { id: 'suggestion-1' }; },
     }),
   };
-  const fakeOpenai: any = {
-    chat: { completions: { create: async () => ({
-      choices: [{ message: { content: JSON.stringify({ suggestions: [{ itemId: 123 }] }) } }],
-    }) } },
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ suggestions: [{ itemId: 123 }] }),
+    }) },
   };
-  await expect(generateSuggestions(fakeOpenai, fakeDb, 'alice')).rejects.toThrow();
+  await expect(generateSuggestions(fakeGenai, fakeDb, 'alice')).rejects.toThrow();
   expect(created).toHaveLength(0);
 });

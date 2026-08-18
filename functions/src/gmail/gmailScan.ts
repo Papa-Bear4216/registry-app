@@ -1,8 +1,9 @@
 import { Firestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { onCall } from 'firebase-functions/v2/https';
 import { extractReceiptFromMessage } from './processGmailMessage';
 import { CollectorType } from '../types/enums';
+import { geminiApiKey } from '../ai/genaiClient';
 
 interface GmailMessage {
   id: string;
@@ -17,7 +18,7 @@ interface GmailClient {
 
 export async function handleGmailScan(
   db: Firestore,
-  openai: OpenAI,
+  genai: GoogleGenAI,
   gmailClient: GmailClient,
   uid: string
 ): Promise<{ stagingItemsCreated: number }> {
@@ -29,7 +30,7 @@ export async function handleGmailScan(
   for (const message of messages) {
     try {
       const body = await gmailClient.getMessageBody(message.id);
-      const extracted = await extractReceiptFromMessage(openai, message.subject, body);
+      const extracted = await extractReceiptFromMessage(genai, message.subject, body);
       if (!extracted) continue;
 
       await db.collection('stagingItems').add({
@@ -57,7 +58,7 @@ export async function handleGmailScan(
   return { stagingItemsCreated: created };
 }
 
-export const gmailScan = onCall(async (request) => {
+export const gmailScan = onCall({ secrets: [geminiApiKey] }, async (request) => {
   if (!request.auth) {
     throw new Error('Unauthenticated');
   }

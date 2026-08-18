@@ -1,7 +1,7 @@
 import { Firestore } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { onCall } from 'firebase-functions/v2/https';
-import { callJsonMode } from './openaiClient';
+import { callJsonMode, geminiApiKey } from './genaiClient';
 
 interface RankingResult {
   orderedItemIds: string[];
@@ -12,7 +12,7 @@ function isValidRanking(x: any): x is RankingResult {
   return Array.isArray(x?.orderedItemIds) && typeof x?.bestItemId === 'string';
 }
 
-export async function rankCategory(openai: OpenAI, db: Firestore, uid: string, taskCategory: string): Promise<void> {
+export async function rankCategory(genai: GoogleGenAI, db: Firestore, uid: string, taskCategory: string): Promise<void> {
   const items = await db
     .collection('registryItems')
     .where('createdBy', '==', uid)
@@ -25,7 +25,7 @@ export async function rankCategory(openai: OpenAI, db: Firestore, uid: string, t
   const systemPrompt = `Rank these tools for the "${taskCategory}" task category, best first. Respond in JSON: { "orderedItemIds": string[], "bestItemId": string }`;
   const userPrompt = `Candidates: ${JSON.stringify(candidates)}`;
 
-  const parsed = await callJsonMode(openai, systemPrompt, userPrompt);
+  const parsed = await callJsonMode(genai, systemPrompt, userPrompt);
   if (!isValidRanking(parsed)) {
     throw new Error('Malformed ranking response from AI');
   }
@@ -63,7 +63,7 @@ export async function rankCategory(openai: OpenAI, db: Firestore, uid: string, t
   }
 }
 
-export const aiRank = onCall(async (request) => {
+export const aiRank = onCall({ secrets: [geminiApiKey] }, async (request) => {
   if (!request.auth) {
     throw new Error('Unauthenticated');
   }
@@ -72,6 +72,6 @@ export const aiRank = onCall(async (request) => {
     throw new Error('Missing taskCategory');
   }
   const admin = await import('firebase-admin');
-  const { getOpenAIClient } = await import('./openaiClient');
-  await rankCategory(getOpenAIClient(), admin.firestore(), request.auth.uid, taskCategory);
+  const { getGenaiClient } = await import('./genaiClient');
+  await rankCategory(getGenaiClient(), admin.firestore(), request.auth.uid, taskCategory);
 });

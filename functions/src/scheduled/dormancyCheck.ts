@@ -1,14 +1,14 @@
 import { Firestore, DocumentSnapshot } from 'firebase-admin/firestore';
-import OpenAI from 'openai';
+import { GoogleGenAI } from '@google/genai';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
-import { getOpenAIClient } from '../ai/openaiClient';
+import { getGenaiClient, geminiApiKey } from '../ai/genaiClient';
 import { processStagingItem } from '../ai/aiClassify';
 
-type ProcessFn = (openai: OpenAI, db: Firestore, doc: DocumentSnapshot) => Promise<void>;
+type ProcessFn = (genai: GoogleGenAI, db: Firestore, doc: DocumentSnapshot) => Promise<void>;
 
 const BATCH_SIZE = 50;
 
-export async function runRetrySweep(openai: OpenAI, db: Firestore, processFn: ProcessFn = processStagingItem): Promise<void> {
+export async function runRetrySweep(genai: GoogleGenAI, db: Firestore, processFn: ProcessFn = processStagingItem): Promise<void> {
   const stuck = await db
     .collection('stagingItems')
     .where('resolved', '==', false)
@@ -24,7 +24,7 @@ export async function runRetrySweep(openai: OpenAI, db: Firestore, processFn: Pr
 
   for (const doc of stuck.docs) {
     try {
-      await processFn(openai, db, doc);
+      await processFn(genai, db, doc);
     } catch (e) {
       console.error(`Retry sweep failed for staging item ${doc.id}:`, e);
     }
@@ -32,15 +32,15 @@ export async function runRetrySweep(openai: OpenAI, db: Firestore, processFn: Pr
 }
 
 export const dormancyCheck = onSchedule(
-  { schedule: 'every day 03:00', timeoutSeconds: 300 },
+  { schedule: 'every day 03:00', timeoutSeconds: 300, secrets: [geminiApiKey] },
   async () => {
     const admin = await import('firebase-admin');
     const db = admin.firestore();
-    const openai = getOpenAIClient();
+    const genai = getGenaiClient();
     // Dormancy itself is derived client-side at read time (per the base spec's
     // "never store dormant as a field" rule) — this scheduled job's own
     // responsibility is solely the staging retry sweep. A future deadMoneyAlert
     // run (Task 4, next) is what actually needs a server-side dormancy check.
-    await runRetrySweep(openai, db);
+    await runRetrySweep(genai, db);
   }
 );

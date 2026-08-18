@@ -39,6 +39,10 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // genai-prompt/genai-common ship metadata built with a newer Kotlin
+        // than this module's 1.9.24 compiler; the ABI itself is stable Java/Kotlin
+        // interop, so skip the metadata version gate rather than bumping Kotlin.
+        freeCompilerArgs += "-Xskip-metadata-version-check"
     }
 
     lint {
@@ -54,8 +58,8 @@ dependencies {
     implementation(libs.firebase.firestore.ktx)
     implementation(libs.firebase.common.ktx)
 
-    // On-device AI (Gemini Nano via AICore): dependency deferred until
-    // AiCoreAvailability.kt is wired up to a real SDK — see TODO there.
+    // On-device AI (Gemini Nano via AICore)
+    implementation(libs.genai.prompt)
 
     // AndroidX
     implementation(libs.core.ktx)

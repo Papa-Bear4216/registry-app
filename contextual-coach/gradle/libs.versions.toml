@@ -15,6 +15,7 @@ junit = "4.13.2"
 mockk = "1.13.12"
 google-services = "4.4.2"
 lint = "31.5.2"
+genai-prompt = "1.0.0-beta2"
 
 [libraries]
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
@@ -36,6 +37,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 mockk = { group = "io.mockk", name = "mockk", version.ref = "mockk" }
 lint-api = { group = "com.android.tools.lint", name = "lint-api", version.ref = "lint" }
 lint-checks = { group = "com.android.tools.lint", name = "lint-checks", version.ref = "lint" }
+genai-prompt = { group = "com.google.mlkit", name = "genai-prompt", version.ref = "genai-prompt" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

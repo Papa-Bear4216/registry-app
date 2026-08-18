@@ -16,6 +16,14 @@
         { "fieldPath": "createdBy", "order": "ASCENDING" },
         { "fieldPath": "taskCategories", "arrayConfig": "CONTAINS" }
       ]
+    },
+    {
+      "collectionGroup": "stagingItems",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "createdBy", "order": "ASCENDING" },
+        { "fieldPath": "resolved", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

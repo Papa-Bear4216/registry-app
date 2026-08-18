@@ -15,6 +15,10 @@ export interface StagingItem {
   resolvedAt: string | null; // ISO-8601
   classifiedAt: string | null; // ISO-8601; null until aiClassify succeeds — distinguishes
   // "never successfully classified, needs retry" from "classified, awaiting user review"
+  classifiedKind: string | null;
+  classifiedCategory: string | null;
+  classifiedActive: boolean | null;
+  classifiedConfidence: number | null;
   createdBy: string;
 }
 

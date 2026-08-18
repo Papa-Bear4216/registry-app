@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View, TextInput, Button, Text, Pressable } from 'react-native';
-import { addDoc } from 'firebase/firestore';
+import { doc, runTransaction } from 'firebase/firestore';
 import { useAuth } from '../../hooks/useAuth';
 import { initializeFirebaseApp } from '../../firebase/config';
-import { registryItemsRef } from '../../firebase/firestore';
+import { registryItemsRef, stagingItemsRef } from '../../firebase/firestore';
 import { ItemKind, ItemStatus, BillingCycle, TaskCategory } from '../../types/enums';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
@@ -50,13 +50,28 @@ function SelectChip<T extends string>({
   );
 }
 
-export function AddItemScreen({ navigation }: Props) {
+function isValidItemKind(value: string): value is ItemKind {
+  return (Object.values(ItemKind) as string[]).includes(value);
+}
+
+function isValidTaskCategory(value: string): value is TaskCategory {
+  return (Object.values(TaskCategory) as string[]).includes(value);
+}
+
+export function AddItemScreen({ navigation, route }: Props) {
   const { user } = useAuth();
-  const [name, setName] = useState('');
+  const prefill = route.params?.prefill;
+  const resolveStagingItemId = route.params?.resolveStagingItemId;
+
+  const [name, setName] = useState(prefill?.name ?? '');
   const [cost, setCost] = useState('');
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(BillingCycle.Monthly);
-  const [kind, setKind] = useState<ItemKind>(ItemKind.Subscription);
-  const [taskCategories, setTaskCategories] = useState<TaskCategory[]>([]);
+  const [kind, setKind] = useState<ItemKind>(
+    prefill && isValidItemKind(prefill.kind) ? prefill.kind : ItemKind.Subscription
+  );
+  const [taskCategories, setTaskCategories] = useState<TaskCategory[]>(
+    prefill?.taskCategory && isValidTaskCategory(prefill.taskCategory) ? [prefill.taskCategory] : []
+  );
   const [description, setDescription] = useState('');
 
   const toggleTaskCategory = (value: TaskCategory) => {
@@ -68,23 +83,36 @@ export function AddItemScreen({ navigation }: Props) {
   const handleSave = async () => {
     if (!user) return;
     const { db } = initializeFirebaseApp();
-    await addDoc(registryItemsRef(db), {
-      name,
-      cost: parseFloat(cost) || 0,
-      billingCycle,
-      kind,
-      status: ItemStatus.Keep,
-      taskCategories,
-      description,
-      canonicalIdentity: null,
-      justified: false,
-      isBestForTask: false,
-      useCases: null,
-      capabilitySummary: null,
-      sourceUrl: null,
-      createdBy: user.uid,
-      createdAt: new Date().toISOString(),
-    } as any);
+    const newItemRef = doc(registryItemsRef(db));
+
+    await runTransaction(db, async (transaction) => {
+      transaction.set(newItemRef, {
+        name,
+        cost: parseFloat(cost) || 0,
+        billingCycle,
+        kind,
+        status: ItemStatus.Keep,
+        taskCategories,
+        description,
+        canonicalIdentity: null,
+        justified: false,
+        isBestForTask: false,
+        useCases: null,
+        capabilitySummary: null,
+        sourceUrl: null,
+        createdBy: user.uid,
+        createdAt: new Date().toISOString(),
+      } as any);
+
+      if (resolveStagingItemId) {
+        const stagingRef = doc(stagingItemsRef(db), resolveStagingItemId);
+        transaction.update(stagingRef, {
+          resolved: true,
+          resolvedAt: new Date().toISOString(),
+        });
+      }
+    });
+
     navigation.goBack();
   };
 

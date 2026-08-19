@@ -72,7 +72,7 @@ export function AddItemScreen({ navigation, route }: Props) {
   const [taskCategories, setTaskCategories] = useState<TaskCategory[]>(
     prefill?.taskCategory && isValidTaskCategory(prefill.taskCategory) ? [prefill.taskCategory] : []
   );
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState(prefill?.description ?? '');
 
   const toggleTaskCategory = (value: TaskCategory) => {
     setTaskCategories((prev) =>

@@ -41,6 +41,7 @@ export function StagingScreen({ navigation }: Props) {
         name: item.rawLabel,
         kind: item.classifiedKind ?? 'subscription',
         taskCategory: item.classifiedCategory,
+        description: item.classifiedDescription,
       },
       resolveStagingItemId: item.id,
     });
@@ -59,10 +60,13 @@ export function StagingScreen({ navigation }: Props) {
         renderItem={({ item }) => (
           <View style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
             <Text style={{ fontWeight: 'bold' }}>{item.rawLabel}</Text>
-            <Text style={{ color: '#6B7280', fontSize: 12 }}>
+            <Text style={{ color: '#6B7280', fontSize: 12, marginBottom: 4 }}>
               {item.classifiedKind ?? 'unknown'} · {item.classifiedCategory ?? 'unknown'}
               {item.suggestedMatch ? ' · matches an existing item' : ''}
             </Text>
+            {item.classifiedDescription && (
+              <Text style={{ color: '#374151', fontSize: 13 }}>{item.classifiedDescription}</Text>
+            )}
             <View style={{ flexDirection: 'row', marginTop: 8 }}>
               <Pressable
                 onPress={() => approve(item)}

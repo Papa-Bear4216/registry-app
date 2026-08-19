@@ -4,12 +4,22 @@ import { CollectorType, MatchConfidence } from '../../src/types/enums';
 test('classifyStagingItem returns a validated classification from a well-formed AI response', async () => {
   const fakeGenai: any = {
     models: { generateContent: async () => ({
-      text: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 }),
+      text: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9, description: 'Streaming video service.' }),
     }) },
   };
   const stagingItem = { rawLabel: 'Netflix', rawCategory: 'Entertainment' } as any;
   const result = await classifyStagingItem(fakeGenai, stagingItem);
-  expect(result).toEqual({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 });
+  expect(result).toEqual({ kind: 'subscription', category: 'media', active: true, confidence: 0.9, description: 'Streaming video service.' });
+});
+
+test('classifyStagingItem throws on a malformed AI response (missing description)', async () => {
+  const fakeGenai: any = {
+    models: { generateContent: async () => ({
+      text: JSON.stringify({ kind: 'subscription', category: 'media', active: true, confidence: 0.9 }),
+    }) },
+  };
+  const stagingItem = { rawLabel: 'Netflix', rawCategory: 'Entertainment' } as any;
+  await expect(classifyStagingItem(fakeGenai, stagingItem)).rejects.toThrow();
 });
 
 test('classifyStagingItem throws on a malformed AI response (missing required field)', async () => {
@@ -44,7 +54,7 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
   let callCount = 0;
   const responses = [
     { suggestedMatchId: null, confidence: 'low' },
-    { kind: 'subscription', category: 'media', active: true, confidence: 0.9 },
+    { kind: 'subscription', category: 'media', active: true, confidence: 0.9, description: 'Streaming video service.' },
   ];
   const fakeGenai: any = {
     models: { generateContent: async () => ({
@@ -57,6 +67,7 @@ test('processStagingItem writes structured fields and leaves resolved=false for 
   expect(updates).toHaveLength(1);
   expect(updates[0].resolved).toBe(false);
   expect(updates[0].classifiedKind).toBe('subscription');
+  expect(updates[0].classifiedDescription).toBe('Streaming video service.');
   expect(typeof updates[0].classifiedAt).toBe('string');
   expect(updates[0].classifiedAt).not.toBeNull();
 });
@@ -97,7 +108,7 @@ test('processStagingItem backfills registryItemId on the originating observation
   };
   const fakeGenai: any = {
     models: { generateContent: async () => ({
-      text: JSON.stringify({ kind: 'app', category: 'productivity', active: true, confidence: 0.9 }),
+      text: JSON.stringify({ kind: 'app', category: 'productivity', active: true, confidence: 0.9, description: 'Task manager.' }),
     }) },
   };
 

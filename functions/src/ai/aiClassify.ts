@@ -10,6 +10,7 @@ interface ClassificationResult {
   category: string;
   active: boolean;
   confidence: number;
+  description: string;
 }
 
 function isValidClassification(x: any): x is ClassificationResult {
@@ -17,12 +18,13 @@ function isValidClassification(x: any): x is ClassificationResult {
     typeof x?.kind === 'string' &&
     typeof x?.category === 'string' &&
     typeof x?.active === 'boolean' &&
-    typeof x?.confidence === 'number'
+    typeof x?.confidence === 'number' &&
+    typeof x?.description === 'string'
   );
 }
 
 export async function classifyStagingItem(genai: GoogleGenAI, stagingItem: Pick<StagingItem, 'rawLabel' | 'rawCategory'>): Promise<ClassificationResult> {
-  const systemPrompt = `Classify a subscription/tool. Respond in JSON: { "kind": one of "app"|"subscription"|"dev_tool"|"service"|"hardware"|"other", "category": one of "writing"|"coding"|"communication"|"design"|"productivity"|"media"|"finance"|"utilities"|"other", "active": boolean (is this a real recurring cost, not a one-off), "confidence": number 0-1 }`;
+  const systemPrompt = `Classify a subscription/tool. Respond in JSON: { "kind": one of "app"|"subscription"|"dev_tool"|"service"|"hardware"|"other", "category": one of "writing"|"coding"|"communication"|"design"|"productivity"|"media"|"finance"|"utilities"|"other", "active": boolean (is this a real recurring cost, not a one-off), "confidence": number 0-1, "description": a plain-language, one-to-two sentence summary of what this app/tool/service is and what it's typically used for, written for someone deciding whether to keep or cut it }`;
   const userPrompt = `Name: "${stagingItem.rawLabel}"\nCategory hint: "${stagingItem.rawCategory ?? 'none'}"`;
 
   const parsed = await callJsonMode(genai, systemPrompt, userPrompt);
@@ -62,6 +64,7 @@ export async function processStagingItem(genai: GoogleGenAI, db: Firestore, doc:
     classifiedCategory: classification.category,
     classifiedActive: classification.active,
     classifiedConfidence: classification.confidence,
+    classifiedDescription: classification.description,
     resolved: false, // stays false until the user approves/ignores in the Staging screen
     classifiedAt: new Date().toISOString(), // marks successful classification so the retry sweep skips this item
   });

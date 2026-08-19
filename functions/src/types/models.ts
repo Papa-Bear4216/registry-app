@@ -19,6 +19,7 @@ export interface StagingItem {
   classifiedCategory: string | null;
   classifiedActive: boolean | null;
   classifiedConfidence: number | null;
+  classifiedDescription: string | null;
   createdBy: string;
 }
 

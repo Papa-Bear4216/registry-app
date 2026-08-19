@@ -55,5 +55,6 @@ export interface StagingItem {
   classifiedCategory: TaskCategory | null;
   classifiedActive: boolean | null;
   classifiedConfidence: number | null;
+  classifiedDescription: string | null;
   createdBy: string;
 }

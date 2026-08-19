@@ -135,10 +135,15 @@ test('Save does nothing when there is no authenticated user', async () => {
   expect(navigation.goBack).not.toHaveBeenCalled();
 });
 
-test('opened via staging approval, prefills name/kind/taskCategory from route params', async () => {
+test('opened via staging approval, prefills name/kind/taskCategory/description from route params', async () => {
   const route = {
     params: {
-      prefill: { name: 'Netflix', kind: ItemKind.Subscription, taskCategory: TaskCategory.Media },
+      prefill: {
+        name: 'Netflix',
+        kind: ItemKind.Subscription,
+        taskCategory: TaskCategory.Media,
+        description: 'Streaming video service, typically used for watching movies and TV shows.',
+      },
       resolveStagingItemId: 'staging-1',
     },
   } as any;
@@ -147,6 +152,9 @@ test('opened via staging approval, prefills name/kind/taskCategory from route pa
   expect(getByPlaceholderText('Name').props.value).toBe('Netflix');
   expect(getByTestId(`kind-${ItemKind.Subscription}`).props.style.backgroundColor).toBe('#2563EB');
   expect(getByTestId(`task-category-${TaskCategory.Media}`).props.style.backgroundColor).toBe('#2563EB');
+  expect(getByPlaceholderText('Description').props.value).toBe(
+    'Streaming video service, typically used for watching movies and TV shows.'
+  );
 });
 
 test('an invalid/unrecognized prefill kind or taskCategory falls back to the defaults, not a crash', async () => {

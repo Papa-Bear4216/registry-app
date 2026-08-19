@@ -7,6 +7,7 @@ export type RootStackParamList = {
       name: string;
       kind: string;
       taskCategory: string | null;
+      description: string | null;
     };
     resolveStagingItemId?: string;
   } | undefined;

@@ -122,7 +122,7 @@ class ConsentDisclosureActivity : AppCompatActivity() {
         layout.addView(Button(this).apply {
             text = getString(R.string.grant_accessibility)
             setOnClickListener {
-                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+                AccessibilitySettingsHelper.openAccessibilitySettingsForThisService(this@ConsentDisclosureActivity)
             }
         })
         layout.addView(accessibilityStatus)
@@ -162,7 +162,7 @@ class ConsentDisclosureActivity : AppCompatActivity() {
     private fun updatePermissionStatus() {
         if (!::accessibilityStatus.isInitialized) return
 
-        val hasAccessibility = isAccessibilityServiceEnabled()
+        val hasAccessibility = AccessibilitySettingsHelper.isAccessibilityServiceEnabled(this)
         val hasOverlay = Settings.canDrawOverlays(this)
 
         accessibilityStatus.text = getString(
@@ -176,17 +176,4 @@ class ConsentDisclosureActivity : AppCompatActivity() {
         proceedButton.isEnabled = hasAccessibility && hasOverlay
     }
 
-    private fun isAccessibilityServiceEnabled(): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val myService = "$packageName/${AccessibilityMonitorFullName}"
-        return enabledServices.contains(myService, ignoreCase = true)
-    }
-
-    companion object {
-        private const val AccessibilityMonitorFullName =
-            "com.registry.coach.monitor.AccessibilityMonitor"
-    }
 }

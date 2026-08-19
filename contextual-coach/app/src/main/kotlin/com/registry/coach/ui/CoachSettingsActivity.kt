@@ -4,12 +4,11 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.NotificationCompat
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
 import com.registry.coach.R
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -60,17 +59,12 @@ class CoachSettingsActivity : AppCompatActivity() {
         // Toggle
         coachToggle = Switch(this).apply {
             text = getString(R.string.toggle_coach)
-            setOnCheckedChangeListener { _, isChecked ->
-                if (isChecked) {
-                    // Guide user to enable accessibility service in Settings
-                    startActivity(android.content.Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                } else {
-                    // Spec section 7: disabling MUST immediately halt tree reads.
-                    // On API 24+, AccessibilityService.disableSelf() can be called
-                    // from the service itself. From this activity, we guide the user
-                    // to revoke via Settings.
-                    startActivity(android.content.Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
-                }
+            setOnCheckedChangeListener { _, _ ->
+                // Both directions (enable and disable — spec section 7: disabling
+                // MUST immediately halt tree reads, which only Settings can do
+                // reliably from outside the service itself) route to the same
+                // deep link — Android's own toggle there is the source of truth.
+                AccessibilitySettingsHelper.openAccessibilitySettingsForThisService(this@CoachSettingsActivity)
             }
         }
         layout.addView(coachToggle)
@@ -91,7 +85,7 @@ class CoachSettingsActivity : AppCompatActivity() {
      * not just user intent.
      */
     private fun updateStatus() {
-        val isRunning = isAccessibilityServiceRunning()
+        val isRunning = AccessibilitySettingsHelper.isAccessibilityServiceEnabled(this)
         statusText.text = getString(
             if (isRunning) R.string.coach_enabled else R.string.coach_disabled
         )
@@ -103,15 +97,6 @@ class CoachSettingsActivity : AppCompatActivity() {
         } else {
             hideActiveNotification()
         }
-    }
-
-    private fun isAccessibilityServiceRunning(): Boolean {
-        val enabledServices = Settings.Secure.getString(
-            contentResolver,
-            Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES
-        ) ?: return false
-        val myService = "$packageName/com.registry.coach.monitor.AccessibilityMonitor"
-        return enabledServices.contains(myService, ignoreCase = true)
     }
 
     /**

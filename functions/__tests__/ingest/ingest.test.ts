@@ -12,13 +12,24 @@ jest.mock('../../src/ingest/deviceSource', () => ({
   findOrCreateDeviceSource: jest.fn(() => Promise.resolve('device-source-id')),
 }));
 
-function makeFakeDb(existingIdempotencyKeys: string[] = []) {
+function makeFakeDb(existingIdempotencyKeys: string[] = [], initialRegistryItems: Record<string, any> = {}) {
   const stagingItems: any[] = [];
   const observations: any[] = [];
+  const registryItems: Record<string, any> = { ...initialRegistryItems };
   return {
     stagingItems,
     observations,
+    registryItems,
     collection: (name: string) => ({
+      doc: (id: string) => ({
+        get: async () => ({
+          exists: !!registryItems[id],
+          data: () => registryItems[id],
+        }),
+        update: async (patch: any) => {
+          registryItems[id] = { ...registryItems[id], ...patch };
+        },
+      }),
       where: (field: string, _op: string, value: any) => ({
         where: (field2: string, _op2: string, value2: any) => ({
           limit: () => ({
@@ -126,4 +137,34 @@ test('malformed payload (missing required field) returns 400', async () => {
 
   expect(res.status).toHaveBeenCalledWith(400);
   expect(db.stagingItems).toHaveLength(0);
+});
+
+test('ingesting observation with registryItemId resets 14-day clock and increments reusabilityCount', async () => {
+  const initialItem = {
+    name: 'Quick Log Shortcut',
+    status: 'review',
+    createdBy: 'alice',
+    keepClockExpiresAt: '2026-01-01T00:00:00Z',
+    reusabilityCount: 3,
+  };
+  const db: any = makeFakeDb([], { 'item-123': initialItem });
+  const req = {
+    headers: { authorization: 'Bearer valid-token' },
+    body: validBody({
+      registryItemId: 'item-123',
+      idempotencyKey: 'exec:item-123:1700000000',
+      payload: { usageCount: 2, usageDurationMs: 5000, windowHours: 1 },
+    }),
+  };
+  const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+
+  await handleIngest(db, req as any, res as any);
+
+  expect(res.status).toHaveBeenCalledWith(200);
+  expect(db.observations[0].registryItemId).toBe('item-123');
+  const updatedItem = db.registryItems['item-123'];
+  expect(updatedItem.status).toBe('keep');
+  expect(updatedItem.reusabilityCount).toBe(5); // 3 + 2
+  expect(typeof updatedItem.keepClockExpiresAt).toBe('string');
+  expect(new Date(updatedItem.keepClockExpiresAt).getTime()).toBeGreaterThan(new Date('2026-01-01T00:00:00Z').getTime());
 });

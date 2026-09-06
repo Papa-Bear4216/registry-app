@@ -52,7 +52,7 @@ function item(overrides: Partial<RegistryItem>): RegistryItem {
 
 const fixtures: RegistryItem[] = [
   item({ name: 'Netflix', status: ItemStatus.Keep, kind: ItemKind.Subscription }),
-  item({ name: 'Notion', status: ItemStatus.Review, kind: ItemKind.App }),
+  item({ name: 'Notion', status: ItemStatus.Review, kind: ItemKind.App, suggestedAction: 'Create quick note' }),
   item({ name: 'GitHub Copilot', status: ItemStatus.Cut, kind: ItemKind.DevTool }),
 ];
 
@@ -75,13 +75,13 @@ test('search narrows the list by name (case-insensitive)', async () => {
   const { getByPlaceholderText, getByText, queryByText } = await render(
     <RegistryListScreen navigation={navigation} route={{} as any} />
   );
-  await fireEvent.changeText(getByPlaceholderText('Search…'), 'NOTI');
+  await fireEvent.changeText(getByPlaceholderText('Search automations…'), 'NOTI');
   expect(getByText('Notion')).toBeTruthy();
   expect(queryByText('Netflix')).toBeNull();
   expect(queryByText('GitHub Copilot')).toBeNull();
 });
 
-test('status chip narrows the list, and "All statuses" restores it', async () => {
+test('status chip narrows the list, and "All Statuses" restores it', async () => {
   const { getByTestId, getByText, queryByText } = await render(
     <RegistryListScreen navigation={navigation} route={{} as any} />
   );
@@ -92,20 +92,19 @@ test('status chip narrows the list, and "All statuses" restores it', async () =>
   expect(queryByText('Netflix')).toBeNull();
   expect(queryByText('GitHub Copilot')).toBeNull();
 
-  await fireEvent.press(getByText('All statuses'));
+  await fireEvent.press(getByText('All Statuses'));
   expect(getByText('Netflix')).toBeTruthy();
   expect(getByText('Notion')).toBeTruthy();
   expect(getByText('GitHub Copilot')).toBeTruthy();
 });
 
-test('kind chip narrows the list', async () => {
-  const { getByTestId, getByText, queryByText } = await render(
+test('shows empty state when no items match filters', async () => {
+  const { getByPlaceholderText, getByText } = await render(
     <RegistryListScreen navigation={navigation} route={{} as any} />
   );
-  await fireEvent.press(getByTestId(`kind-filter-${ItemKind.DevTool}`));
-  expect(getByText('GitHub Copilot')).toBeTruthy();
-  expect(queryByText('Netflix')).toBeNull();
-  expect(queryByText('Notion')).toBeNull();
+  await fireEvent.changeText(getByPlaceholderText('Search automations…'), 'NonExistentShortcut');
+  expect(getByText('No Active Automations')).toBeTruthy();
+  expect(getByText('+ Create Custom Shortcut')).toBeTruthy();
 });
 
 test('tapping a list item navigates to ItemDetail with the item id', async () => {

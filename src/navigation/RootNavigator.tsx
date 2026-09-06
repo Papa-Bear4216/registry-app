@@ -7,6 +7,7 @@ import { SignupScreen } from '../screens/auth/SignupScreen';
 import { TabNavigator } from './TabNavigator';
 import { AddItemScreen } from '../screens/registry/AddItemScreen';
 import { ItemDetailScreen } from '../screens/registry/ItemDetailScreen';
+import { MonthlyReviewScreen } from '../screens/reviews/MonthlyReviewScreen';
 import { OfflineBanner } from '../components/OfflineBanner';
 import { View, ActivityIndicator } from 'react-native';
 
@@ -32,6 +33,11 @@ export function RootNavigator() {
             <Stack.Screen name="Tabs" component={TabNavigator} options={{ headerShown: false }} />
             <Stack.Screen name="AddItem" component={AddItemScreen} options={{ title: 'Add Item' }} />
             <Stack.Screen name="ItemDetail" component={ItemDetailScreen} options={{ title: 'Item Detail' }} />
+            <Stack.Screen
+              name="MonthlyReview"
+              component={MonthlyReviewScreen}
+              options={{ title: 'Monthly Checkpoint' }}
+            />
           </>
         ) : (
           <>

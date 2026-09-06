@@ -10,12 +10,16 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export function TabNavigator() {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Registry" component={RegistryListScreen} />
-      <Tab.Screen name="Staging" component={StagingScreen} options={{ title: 'Review' }} />
-      <Tab.Screen name="Tasks" component={TasksScreen} />
-      <Tab.Screen name="Alerts" component={AlertsScreen} />
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#2563EB',
+        tabBarInactiveTintColor: '#6B7280',
+      }}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} options={{ title: 'Hub' }} />
+      <Tab.Screen name="Registry" component={RegistryListScreen} options={{ title: 'Automations' }} />
+      <Tab.Screen name="Staging" component={StagingScreen} options={{ title: 'Discovery' }} />
     </Tab.Navigator>
   );
 }

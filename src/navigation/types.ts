@@ -12,6 +12,7 @@ export type RootStackParamList = {
     resolveStagingItemId?: string;
   } | undefined;
   ItemDetail: { itemId: string };
+  MonthlyReview: undefined;
 };
 
 export type RootTabParamList = {

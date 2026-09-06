@@ -8,6 +8,7 @@ import { deadMoneyAlert } from './scheduled/deadMoneyAlert';
 import { weeklyDigest } from './scheduled/weeklyDigest';
 import { aiSuggest } from './ai/aiSuggest';
 import { aiRank } from './ai/aiRank';
+import { lifecycleSweep } from './scheduled/lifecycleSweep';
 
 admin.initializeApp();
 
@@ -19,3 +20,4 @@ export { aiClassify };
 export { gmailScan };
 export { dormancyCheck, deadMoneyAlert, weeklyDigest };
 export { aiSuggest, aiRank };
+export { lifecycleSweep };

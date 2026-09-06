@@ -4,6 +4,7 @@ import { Response } from 'express';
 import { verifyIdToken } from '../lib/auth';
 import { findOrCreateDeviceSource } from './deviceSource';
 import { CollectorType } from '../types/enums';
+import { calculateKeepExpiry } from '@registry/pattern-analyzer';
 
 interface IngestBody {
   collector: CollectorType;
@@ -12,6 +13,7 @@ interface IngestBody {
   rawLabel: string;
   rawCategory?: string;
   rawIdentity?: string;
+  registryItemId?: string;
   idempotencyKey: string;
   payload: {
     usageCount: number;
@@ -28,6 +30,7 @@ function isValidBody(body: any): body is IngestBody {
     typeof body?.rawLabel === 'string' &&
     typeof body?.idempotencyKey === 'string' &&
     body.idempotencyKey.length > 0 &&
+    (body?.registryItemId === undefined || typeof body?.registryItemId === 'string') &&
     typeof body?.payload === 'object' &&
     typeof body?.payload?.usageCount === 'number' &&
     typeof body?.payload?.usageDurationMs === 'number' &&
@@ -87,7 +90,7 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
   });
 
   await db.collection('observations').add({
-    registryItemId: null,
+    registryItemId: body.registryItemId ?? null,
     stagingItemId: stagingRef.id,
     deviceSourceId,
     idempotencyKey: body.idempotencyKey,
@@ -98,6 +101,21 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
     usageDurationMs: body.payload.usageDurationMs,
     createdBy: uid,
   });
+
+  if (body.registryItemId) {
+    const itemRef = db.collection('registryItems').doc(body.registryItemId);
+    const itemSnap = await itemRef.get();
+    if (itemSnap.exists && itemSnap.data()?.createdBy === uid) {
+      const keepClockExpiresAt = calculateKeepExpiry(new Date(now)).toISOString();
+      const currentRuns = itemSnap.data()?.reusabilityCount ?? 0;
+      await itemRef.update({
+        keepClockExpiresAt,
+        status: 'keep',
+        reusabilityCount: currentRuns + (body.payload.usageCount || 1),
+        updatedAt: now,
+      });
+    }
+  }
 
   res.status(200).json({ ok: true });
 }

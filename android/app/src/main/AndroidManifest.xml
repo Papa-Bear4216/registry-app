@@ -4,7 +4,30 @@
   <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW"/>
   <uses-permission android:name="android.permission.VIBRATE"/>
   <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" tools:replace="android:maxSdkVersion"/>
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" tools:ignore="QueryAllPackagesCondition"/>
   <queries>
+    <package android:name="com.registry.coach"/>
+    <package android:name="com.registry.usagecollector"/>
+    <package android:name="com.samsung.android.dialer"/>
+    <package android:name="com.anthropic.claude"/>
+    <package android:name="com.android.vending"/>
+    <package android:name="com.sec.android.daemonapp"/>
+    <package android:name="com.samsung.android.app.notes"/>
+    <package android:name="com.android.chrome"/>
+    <package android:name="co.mangotechnologies.clickup"/>
+    <package android:name="com.google.android.gm"/>
+    <package android:name="com.discord"/>
+    <package android:name="com.whatsapp"/>
+    <package android:name="ai.perplexity.app.android"/>
+    <package android:name="com.openai.chatgpt"/>
+    <package android:name="com.termux"/>
+    <package android:name="io.homeassistant.companion.android"/>
+    <package android:name="com.google.android.calendar"/>
+    <package android:name="us.zoom.videomeetings"/>
+    <package android:name="com.codespaceapps.listeningapp"/>
+    <intent>
+      <action android:name="android.intent.action.DIAL"/>
+    </intent>
     <intent>
       <action android:name="android.intent.action.VIEW"/>
       <category android:name="android.intent.category.BROWSABLE"/>

@@ -1,5 +1,14 @@
 import { ItemStatus, ItemKind, BillingCycle, TaskCategory, AlertType, CollectorType, MatchConfidence } from './enums';
 
+export interface WorkflowStep {
+  id?: string;
+  order: number;
+  label: string;
+  target: string;
+  type?: 'app_launch' | 'intent' | 'deep_link' | 'script';
+  delayMs?: number;
+}
+
 export interface RegistryItem {
   id: string;
   name: string;
@@ -17,6 +26,29 @@ export interface RegistryItem {
   sourceUrl: string | null;
   createdBy: string;
   createdAt: string; // ISO-8601
+
+  // Lifecycle & Pattern Engine Fields
+  keepClockExpiresAt?: string | null;
+  reusabilityCount?: number;
+  promotionScore?: number;
+  lastExecutedAt?: string | null;
+  lastObservedAt?: string;
+  reviewReason?: 'dormant' | 'high_friction' | 'gap_detected' | null;
+  triggerDescription?: string;
+  actionPayload?: string;
+  estimatedSecondsSaved?: number;
+  steps?: WorkflowStep[];
+  suggestedAction?: {
+    type: 'script' | 'intent' | 'shortcut' | 'tool_swap' | 'multi_step';
+    payload: string;
+    estimatedSecondsSaved: number;
+    steps?: WorkflowStep[];
+  };
+  triggerSignature?: {
+    sourceApps: string[];
+    sequenceLength?: number;
+    timeContext?: string;
+  };
 }
 
 export interface Observation {
@@ -41,6 +73,7 @@ export interface AlertDismissal {
 export interface StagingItem {
   id: string;
   rawLabel: string;
+  workflowTitle?: string;
   rawCategory: string | null;
   rawIdentity: string | null;
   collector: CollectorType;
@@ -56,5 +89,10 @@ export interface StagingItem {
   classifiedActive: boolean | null;
   classifiedConfidence: number | null;
   classifiedDescription: string | null;
+  actionType?: 'intent' | 'deep_link' | 'script' | 'app_launch' | 'multi_step';
+  actionPayload?: string;
+  triggerDescription?: string;
+  estimatedSecondsSaved?: number;
+  steps?: WorkflowStep[];
   createdBy: string;
 }

@@ -40,6 +40,9 @@ class AppLauncherModule(private val reactContext: ReactApplicationContext) : Rea
               setClassName("com.registry.usagecollector", "com.registry.collector.ui.MainActivity")
             }
           }
+          "com.google.android.apps.bard" -> {
+            intent = pm.getLaunchIntentForPackage("com.google.android.apps.bard")
+          }
           else -> {
             try {
               val mainIntent = Intent(Intent.ACTION_MAIN, null).apply {

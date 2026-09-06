@@ -5,7 +5,7 @@ import { useRegistryItems } from '../../hooks/useRegistryItems';
 import { calculateTotalTimeSavedMinutes } from '../../lib/clockFormat';
 import { launchPackage } from '../../lib/appLauncher';
 import { isRealAutomation } from '../../lib/shortcutFilter';
-import { SEEDED_ACTIVE_AUTOMATIONS } from '../../lib/defaultAutomations';
+import { SEEDED_ACTIVE_AUTOMATIONS, normalizeRegistryItem } from '../../lib/defaultAutomations';
 import { monthlyEquivalent } from '../../lib/costNormalization';
 import { ItemStatus } from '../../types/enums';
 import { CompositeScreenProps } from '@react-navigation/native';
@@ -60,7 +60,7 @@ export function HomeScreen({ navigation }: Props) {
   const { user } = useAuth();
   const { items, loading: itemsLoading } = useRegistryItems(user?.uid ?? '');
 
-  const realItems = useMemo(() => items.filter(isRealAutomation), [items]);
+  const realItems = useMemo(() => items.filter(isRealAutomation).map(normalizeRegistryItem), [items]);
   const allItems = useMemo(() => {
     return realItems.length > 0 ? realItems : SEEDED_ACTIVE_AUTOMATIONS;
   }, [realItems]);

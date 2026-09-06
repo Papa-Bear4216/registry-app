@@ -9,7 +9,7 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     rawLabel: 'Academic Audio Research & Gmail Outreach',
     workflowTitle: 'Academic Audio Research & Gmail Outreach',
     rawCategory: 'productivity',
-    rawIdentity: 'listening_claude_gmail',
+    rawIdentity: 'listening_gemini_gmail',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
@@ -22,14 +22,14 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Productivity,
     classifiedActive: true,
     classifiedConfidence: 0.96,
-    classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Claude AI to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
+    classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Google Gemini to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
     triggerDescription: 'Triggered when audio paper bookmarking finishes in Listening App',
     actionType: 'multi_step',
-    actionPayload: 'com.codespaceapps.listeningapp -> com.anthropic.claude -> com.google.android.gm',
+    actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard -> com.google.android.gm',
     estimatedSecondsSaved: 240,
     steps: [
       { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp', delayMs: 120 },
-      { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+      { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
       { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
     ],
     createdBy: 'default',
@@ -128,7 +128,7 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     rawLabel: 'Terminal Debugging & AI Assistance Flow',
     workflowTitle: 'Terminal Debugging & AI Assistance Flow',
     rawCategory: 'development',
-    rawIdentity: 'termux_claude_discord',
+    rawIdentity: 'termux_gemini_discord',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 18000 * 1000).toISOString(),
@@ -141,14 +141,14 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Writing,
     classifiedActive: true,
     classifiedConfidence: 0.95,
-    classifiedDescription: 'Launches Termux development environment, prompts Claude AI for code debugging and error analysis, and updates the Discord development thread.',
+    classifiedDescription: 'Launches Termux development environment, prompts Google Gemini for code debugging and error analysis, and updates the Discord development thread.',
     triggerDescription: 'Triggered during active scripting sessions in Termux',
     actionType: 'multi_step',
-    actionPayload: 'com.termux -> com.anthropic.claude -> com.discord',
+    actionPayload: 'com.termux -> com.google.android.apps.bard -> com.discord',
     estimatedSecondsSaved: 210,
     steps: [
       { order: 1, label: 'Termux Terminal', target: 'com.termux', delayMs: 120 },
-      { order: 2, label: 'Claude AI Assistant', target: 'com.anthropic.claude', delayMs: 120 },
+      { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
       { order: 3, label: 'Discord Dev Channel', target: 'com.discord', delayMs: 120 },
     ],
     createdBy: 'default',
@@ -215,18 +215,18 @@ export const SEEDED_ACTIVE_AUTOMATIONS: RegistryItem[] = [
   },
   {
     id: 'auto-2',
-    name: 'Claude Workspace Dispatcher',
+    name: 'Gemini Workspace Dispatcher',
     cost: 0,
     billingCycle: BillingCycle.Monthly,
     kind: ItemKind.App,
     status: ItemStatus.Keep,
     taskCategories: [TaskCategory.Design],
-    description: 'Instant prompt & context transfer into Claude mobile workspace.',
-    canonicalIdentity: 'com.anthropic.claude',
+    description: 'Instant prompt & context transfer into Google Gemini mobile workspace.',
+    canonicalIdentity: 'com.google.android.apps.bard',
     justified: true,
     isBestForTask: true,
     useCases: 'Drafting, reasoning, code synthesis',
-    capabilitySummary: 'Claude AI Launcher',
+    capabilitySummary: 'Google Gemini Launcher',
     sourceUrl: null,
     createdBy: 'default',
     createdAt: new Date().toISOString(),
@@ -235,10 +235,10 @@ export const SEEDED_ACTIVE_AUTOMATIONS: RegistryItem[] = [
     triggerDescription: 'Triggered from long-press selection or share sheet',
     suggestedAction: {
       type: 'intent',
-      payload: 'com.anthropic.claude',
+      payload: 'com.google.android.apps.bard',
       estimatedSecondsSaved: 120,
     },
-    actionPayload: 'com.anthropic.claude',
+    actionPayload: 'com.google.android.apps.bard',
   },
   {
     id: 'auto-3',
@@ -275,8 +275,8 @@ export const SEEDED_ACTIVE_AUTOMATIONS: RegistryItem[] = [
     kind: ItemKind.App,
     status: ItemStatus.Keep,
     taskCategories: [TaskCategory.Productivity],
-    description: '3-step autonomous pipeline: captures Chrome research, prompts Claude for synthesis, and drafts outreach in Gmail.',
-    canonicalIdentity: 'chrome_claude_gmail',
+    description: '3-step autonomous pipeline: captures Chrome research, prompts Gemini for synthesis, and drafts outreach in Gmail.',
+    canonicalIdentity: 'chrome_gemini_gmail',
     justified: true,
     isBestForTask: true,
     useCases: 'Deep research, cross-app summarization, team outreach',
@@ -286,21 +286,21 @@ export const SEEDED_ACTIVE_AUTOMATIONS: RegistryItem[] = [
     createdAt: new Date().toISOString(),
     keepClockExpiresAt: new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString(),
     reusabilityCount: 5,
-    triggerDescription: 'Triggered when researching articles in Chrome with rapid switch to Claude & Gmail',
+    triggerDescription: 'Triggered when researching articles in Chrome with rapid switch to Gemini & Gmail',
     estimatedSecondsSaved: 210,
     steps: [
       { order: 1, label: 'Google Chrome', target: 'com.android.chrome', delayMs: 120 },
-      { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+      { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
       { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
     ],
-    actionPayload: 'com.android.chrome -> com.anthropic.claude -> com.google.android.gm',
+    actionPayload: 'com.android.chrome -> com.google.android.apps.bard -> com.google.android.gm',
     suggestedAction: {
       type: 'multi_step',
-      payload: 'com.android.chrome -> com.anthropic.claude -> com.google.android.gm',
+      payload: 'com.android.chrome -> com.google.android.apps.bard -> com.google.android.gm',
       estimatedSecondsSaved: 210,
       steps: [
         { order: 1, label: 'Google Chrome', target: 'com.android.chrome', delayMs: 120 },
-        { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
         { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
       ],
     },
@@ -320,7 +320,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     pkg: 'com.codespaceapps.listeningapp',
     category: TaskCategory.Productivity,
     companionChain: [
-      { label: 'Claude AI', pkg: 'com.anthropic.claude' },
+      { label: 'Google Gemini', pkg: 'com.google.android.apps.bard' },
       { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
     ],
   },
@@ -340,6 +340,15 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     companionChain: [
       { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
       { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
+    ],
+  },
+  'com.google.android.apps.bard': {
+    label: 'Google Gemini',
+    pkg: 'com.google.android.apps.bard',
+    category: TaskCategory.Writing,
+    companionChain: [
+      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
+      { label: 'Discord Discussion', pkg: 'com.discord' },
     ],
   },
   'com.anthropic.claude': {
@@ -365,7 +374,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     pkg: 'com.termux',
     category: TaskCategory.Development,
     companionChain: [
-      { label: 'Claude AI Assistant', pkg: 'com.anthropic.claude' },
+      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
       { label: 'Discord Dev Channel', pkg: 'com.discord' },
     ],
   },
@@ -410,7 +419,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     category: TaskCategory.Communication,
     companionChain: [
       { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-      { label: 'Claude AI Assistant', pkg: 'com.anthropic.claude' },
+      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
     ],
   },
   'co.mangotechnologies.clickup': {
@@ -418,7 +427,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     pkg: 'co.mangotechnologies.clickup',
     category: TaskCategory.Productivity,
     companionChain: [
-      { label: 'Claude AI Assistant', pkg: 'com.anthropic.claude' },
+      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
       { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
     ],
   },
@@ -464,6 +473,7 @@ export function getAppLabel(target: string): string {
     return APP_CATALOG[trimmed].label;
   }
   const lower = trimmed.toLowerCase();
+  if (lower.includes('gemini') || lower.includes('bard')) return 'Google Gemini';
   if (lower.includes('chrome')) return 'Google Chrome';
   if (lower.includes('perplexity')) return 'Perplexity AI';
   if (lower.includes('claude')) return 'Claude AI';
@@ -535,13 +545,23 @@ export function resolveTargetPackageOrIntent(name: string, payload?: string): Re
     return { type: 'package', target: 'com.samsung.android.dialer' };
   }
 
-  // 2. Claude AI Assistant
+  // 2. Google Gemini AI Assistant (primary AI assistant - all AI flows use Gemini)
   if (
+    lowerTarget === 'gemini' ||
+    lowerName.includes('gemini') ||
+    lowerTarget.includes('gemini') ||
+    lowerTarget.includes('bard') ||
+    lowerName.includes('bard') ||
+    lowerName === 'ai' ||
+    lowerTarget === 'ai' ||
+    lowerName === 'ai assistant' ||
+    lowerTarget === 'ai assistant' ||
     lowerTarget === 'claude' ||
     lowerName.includes('claude') ||
+    lowerTarget.includes('claude') ||
     lowerTarget.includes('anthropic')
   ) {
-    return { type: 'package', target: 'com.anthropic.claude' };
+    return { type: 'package', target: 'com.google.android.apps.bard' };
   }
 
   // 3. Perplexity AI
@@ -737,16 +757,26 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
   const lowerLabel = label.toLowerCase();
   const lowerIdentity = identity.toLowerCase();
 
-  // Check if item contains legacy Samsung Notes hardcoding that must be purged
-  const hasLegacyNotes =
+  // Check if item contains legacy Samsung Notes or Claude hardcoding that must be purged
+  const hasLegacyNotesOrClaude =
     lowerLabel.includes('samsung notes') ||
     lowerLabel.includes('note clipper') ||
+    lowerLabel.includes('claude') ||
     lowerIdentity.includes('samsung.android.app.notes') ||
+    lowerIdentity.includes('anthropic') ||
+    lowerIdentity.includes('claude') ||
     item.actionPayload?.includes('com.samsung.android.app.notes') ||
-    item.steps?.some((s) => s.target?.includes('com.samsung.android.app.notes') || s.label?.toLowerCase().includes('notes'));
+    item.actionPayload?.includes('com.anthropic.claude') ||
+    item.steps?.some(
+      (s) =>
+        s.target?.includes('com.samsung.android.app.notes') ||
+        s.target?.includes('com.anthropic.claude') ||
+        s.label?.toLowerCase().includes('notes') ||
+        s.label?.toLowerCase().includes('claude')
+    );
 
-  // 1. If it already has structured multi-step flow without legacy notes, preserve it with 120ms delays
-  if (!hasLegacyNotes && item.steps && item.steps.length > 0 && item.workflowTitle && !item.workflowTitle.startsWith('com.')) {
+  // 1. If it already has structured multi-step flow without legacy notes/Claude, preserve it with 120ms delays
+  if (!hasLegacyNotesOrClaude && item.steps && item.steps.length > 0 && item.workflowTitle && !item.workflowTitle.startsWith('com.')) {
     return {
       ...item,
       steps: item.steps.map((s, idx) => ({
@@ -757,19 +787,19 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
     };
   }
 
-  // 2. Listening App -> Claude AI -> Gmail Outreach (3-step research & synthesis flow)
+  // 2. Listening App -> Google Gemini -> Gmail Outreach (3-step research & synthesis flow)
   if (lowerLabel.includes('listeningapp') || lowerIdentity.includes('listeningapp') || lowerLabel.includes('academic audio')) {
     return {
       ...item,
       workflowTitle: 'Academic Audio Research & Gmail Outreach',
       rawLabel: 'Academic Audio Research & Gmail Outreach',
       triggerDescription: 'Triggered when audio paper bookmarking finishes in Listening App',
-      classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Claude AI to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
+      classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Google Gemini to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
       estimatedSecondsSaved: 240,
-      actionPayload: 'com.codespaceapps.listeningapp -> com.anthropic.claude -> com.google.android.gm',
+      actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard -> com.google.android.gm',
       steps: [
         { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp', delayMs: 120 },
-        { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
         { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
       ],
     };
@@ -846,19 +876,19 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
     };
   }
 
-  // 7. Termux -> Claude AI Assistant -> Discord Dev Channel
+  // 7. Termux -> Google Gemini Assistant -> Discord Dev Channel
   if (lowerLabel.includes('termux') || lowerIdentity.includes('termux') || lowerLabel.includes('terminal debugging')) {
     return {
       ...item,
       workflowTitle: 'Terminal Debugging & AI Assistance Flow',
       rawLabel: 'Terminal Debugging & AI Assistance Flow',
       triggerDescription: 'Triggered during active scripting sessions in Termux',
-      classifiedDescription: 'Launches Termux development environment, prompts Claude AI for code debugging and error analysis, and updates the Discord development thread.',
+      classifiedDescription: 'Launches Termux development environment, prompts Google Gemini for code debugging and error analysis, and updates the Discord development thread.',
       estimatedSecondsSaved: 210,
-      actionPayload: 'com.termux -> com.anthropic.claude -> com.discord',
+      actionPayload: 'com.termux -> com.google.android.apps.bard -> com.discord',
       steps: [
         { order: 1, label: 'Termux Terminal', target: 'com.termux', delayMs: 120 },
-        { order: 2, label: 'Claude AI Assistant', target: 'com.anthropic.claude', delayMs: 120 },
+        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
         { order: 3, label: 'Discord Dev Channel', target: 'com.discord', delayMs: 120 },
       ],
     };
@@ -892,7 +922,7 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
     };
   }
 
-  // 9. Generic package name fallback (e.g. com.example.app) -> synthesize into multi-step flow with Claude & ClickUp
+  // 9. Generic package name fallback (e.g. com.example.app) -> synthesize into multi-step flow with Google Gemini & ClickUp
   if (label.startsWith('com.') || label.startsWith('org.') || label.startsWith('net.')) {
     const cleanName = label.split('.').pop() || label;
     const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
@@ -901,12 +931,12 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
       workflowTitle: `${formattedName} Task & Action Pipeline`,
       rawLabel: `${formattedName} Task & Action Pipeline`,
       triggerDescription: `Triggered upon multi-app transition involving ${formattedName}`,
-      classifiedDescription: `Dispatches ${formattedName} workflow task, synthesizes findings via Claude AI, and logs actionable items directly in ClickUp.`,
+      classifiedDescription: `Dispatches ${formattedName} workflow task, synthesizes findings via Google Gemini, and logs actionable items directly in ClickUp.`,
       estimatedSecondsSaved: 180,
-      actionPayload: `${label} -> com.anthropic.claude -> co.mangotechnologies.clickup`,
+      actionPayload: `${label} -> com.google.android.apps.bard -> co.mangotechnologies.clickup`,
       steps: [
         { order: 1, label: formattedName, target: label, delayMs: 120 },
-        { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
         { order: 3, label: 'ClickUp Tasks', target: 'co.mangotechnologies.clickup', delayMs: 120 },
       ],
     };
@@ -927,6 +957,53 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
     workflowTitle: item.workflowTitle || item.rawLabel,
     steps: item.steps || [{ order: 1, label: getAppLabel(item.rawLabel), target: resolveTargetPackageOrIntent(item.rawLabel, item.actionPayload).target, delayMs: 120 }],
   };
+}
+
+/**
+ * Normalizes registry items so that any workflows requiring an AI assistant use Google Gemini.
+ */
+export function normalizeRegistryItem(item: RegistryItem): RegistryItem {
+  const lowerName = (item.name || '').toLowerCase();
+  const lowerIdent = (item.canonicalIdentity || '').toLowerCase();
+  const lowerPayload = (item.actionPayload || '').toLowerCase();
+
+  const isClaude =
+    lowerName.includes('claude') ||
+    lowerIdent.includes('com.anthropic.claude') ||
+    lowerPayload.includes('com.anthropic.claude');
+
+  if (isClaude) {
+    return {
+      ...item,
+      name: item.name.toLowerCase() === 'claude' ? 'Google Gemini' : item.name.replace(/claude/gi, 'Google Gemini'),
+      canonicalIdentity: 'com.google.android.apps.bard',
+      description: item.description?.replace(/claude/gi, 'Google Gemini') ?? 'Instant prompt & context transfer into Google Gemini mobile workspace.',
+      capabilitySummary: 'Google Gemini Launcher',
+      actionPayload: item.actionPayload?.replace(/com\.anthropic\.claude/g, 'com.google.android.apps.bard') ?? 'com.google.android.apps.bard',
+      suggestedAction: item.suggestedAction ? {
+        ...item.suggestedAction,
+        payload: item.suggestedAction.payload?.replace(/com\.anthropic\.claude/g, 'com.google.android.apps.bard') ?? 'com.google.android.apps.bard',
+      } : undefined,
+      steps: item.steps?.map((step) => ({
+        ...step,
+        label: step.label?.toLowerCase().includes('claude') ? 'Google Gemini' : step.label,
+        target: step.target === 'com.anthropic.claude' ? 'com.google.android.apps.bard' : step.target,
+      })),
+    };
+  }
+
+  if (item.steps && item.steps.some((s) => s.target === 'com.anthropic.claude' || s.label?.toLowerCase().includes('claude'))) {
+    return {
+      ...item,
+      steps: item.steps.map((step) => ({
+        ...step,
+        label: step.label?.toLowerCase().includes('claude') ? 'Google Gemini' : step.label,
+        target: step.target === 'com.anthropic.claude' ? 'com.google.android.apps.bard' : step.target,
+      })),
+    };
+  }
+
+  return item;
 }
 
 /**

@@ -5,7 +5,7 @@ import { initializeFirebaseApp } from '../../firebase/config';
 import { useObservations } from '../../hooks/useObservations';
 import { costPerUseStat } from '../../lib/costPerUse';
 import { monthlyEquivalent } from '../../lib/costNormalization';
-import { SEEDED_ACTIVE_AUTOMATIONS, executeAutomation, parseStepsFromPayload } from '../../lib/defaultAutomations';
+import { SEEDED_ACTIVE_AUTOMATIONS, executeAutomation, parseStepsFromPayload, normalizeRegistryItem } from '../../lib/defaultAutomations';
 import { RegistryItem, WorkflowStep } from '../../types/models';
 import { ItemStatus } from '../../types/enums';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -26,10 +26,10 @@ export function ItemDetailScreen({ route, navigation }: Props) {
     const { db } = initializeFirebaseApp();
     getDoc(doc(db, 'registryItems', itemId)).then((snap) => {
       if (snap.exists()) {
-        setItem({ id: snap.id, ...snap.data() } as RegistryItem);
+        setItem(normalizeRegistryItem({ id: snap.id, ...snap.data() } as RegistryItem));
       } else {
         const seed = SEEDED_ACTIVE_AUTOMATIONS.find((s) => s.id === itemId);
-        if (seed) setItem(seed);
+        if (seed) setItem(normalizeRegistryItem(seed));
       }
     });
   }, [itemId]);

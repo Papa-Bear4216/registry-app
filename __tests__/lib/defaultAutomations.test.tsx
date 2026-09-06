@@ -2,6 +2,7 @@ import {
   resolveTargetPackageOrIntent,
   executeAutomation,
   normalizeDiscoveredWorkflow,
+  normalizeRegistryItem,
   parseStepsFromPayload,
   isSystemComponent,
 } from '../../src/lib/defaultAutomations';
@@ -22,9 +23,13 @@ describe('defaultAutomations', () => {
       expect(resolveTargetPackageOrIntent('Call Support', 'dialer').target).toBe('com.samsung.android.dialer');
     });
 
-    it('resolves Claude AI workspace accurately', () => {
-      expect(resolveTargetPackageOrIntent('Claude').target).toBe('com.anthropic.claude');
-      expect(resolveTargetPackageOrIntent('Claude Workspace Dispatcher').target).toBe('com.anthropic.claude');
+    it('resolves Google Gemini for all AI requests including Claude references', () => {
+      expect(resolveTargetPackageOrIntent('Gemini').target).toBe('com.google.android.apps.bard');
+      expect(resolveTargetPackageOrIntent('Google Gemini').target).toBe('com.google.android.apps.bard');
+      expect(resolveTargetPackageOrIntent('Gemini Workspace Dispatcher').target).toBe('com.google.android.apps.bard');
+      expect(resolveTargetPackageOrIntent('AI Assistant').target).toBe('com.google.android.apps.bard');
+      expect(resolveTargetPackageOrIntent('Claude').target).toBe('com.google.android.apps.bard');
+      expect(resolveTargetPackageOrIntent('Claude Workspace Dispatcher').target).toBe('com.google.android.apps.bard');
     });
 
     it('resolves Contextual Coach & Collector accurately', () => {
@@ -68,9 +73,9 @@ describe('defaultAutomations', () => {
         isAppInstalled: jest.fn().mockResolvedValue(true),
       };
 
-      const result = await executeAutomation('Claude');
+      const result = await executeAutomation('Gemini');
       expect(result).toBe(true);
-      expect(NativeModules.AppLauncher.launchApp).toHaveBeenCalledWith('com.anthropic.claude');
+      expect(NativeModules.AppLauncher.launchApp).toHaveBeenCalledWith('com.google.android.apps.bard');
       expect(Alert.alert).not.toHaveBeenCalled();
     });
 
@@ -113,13 +118,13 @@ describe('defaultAutomations', () => {
 
       const steps = [
         { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp', delayMs: 10 },
-        { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 10 },
+        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 10 },
         { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 10 },
       ];
 
       const result = await executeAutomation(
         'Academic Audio Research & Gmail Outreach',
-        'com.codespaceapps.listeningapp -> com.anthropic.claude -> com.google.android.gm',
+        'com.codespaceapps.listeningapp -> com.google.android.apps.bard -> com.google.android.gm',
         'multi_step',
         steps
       );
@@ -127,7 +132,7 @@ describe('defaultAutomations', () => {
       expect(result).toBe(true);
       expect(NativeModules.AppLauncher.launchApp).toHaveBeenCalledTimes(3);
       expect(NativeModules.AppLauncher.launchApp).toHaveBeenNthCalledWith(1, 'com.codespaceapps.listeningapp');
-      expect(NativeModules.AppLauncher.launchApp).toHaveBeenNthCalledWith(2, 'com.anthropic.claude');
+      expect(NativeModules.AppLauncher.launchApp).toHaveBeenNthCalledWith(2, 'com.google.android.apps.bard');
       expect(NativeModules.AppLauncher.launchApp).toHaveBeenNthCalledWith(3, 'com.google.android.gm');
     });
   });
@@ -143,7 +148,7 @@ describe('defaultAutomations', () => {
       expect(normalized.workflowTitle).toBe('Academic Audio Research & Gmail Outreach');
       expect(normalized.steps).toHaveLength(3);
       expect(normalized.steps?.[0].label).toBe('Listening App');
-      expect(normalized.steps?.[1].label).toBe('Claude AI');
+      expect(normalized.steps?.[1].label).toBe('Google Gemini');
       expect(normalized.steps?.[2].label).toBe('Gmail Outreach');
       expect(normalized.steps?.[2].target).toBe('com.google.android.gm');
       expect(normalized.steps?.every((s) => s.delayMs === 120)).toBe(true);
@@ -191,6 +196,55 @@ describe('defaultAutomations', () => {
       expect(normalized.steps?.some((s) => s.target === 'com.samsung.android.app.notes')).toBe(false);
       expect(normalized.steps?.every((s) => s.delayMs === 120)).toBe(true);
     });
+
+    it('purges legacy Claude references and re-normalizes to Google Gemini flow', () => {
+      const legacyClaudeItem: any = {
+        id: 'test-claude-legacy',
+        rawLabel: 'Claude Task Pipeline',
+        actionPayload: 'com.termux -> com.anthropic.claude -> com.discord',
+        steps: [
+          { order: 1, label: 'Termux', target: 'com.termux', delayMs: 120 },
+          { order: 2, label: 'Claude AI', target: 'com.anthropic.claude', delayMs: 120 },
+          { order: 3, label: 'Discord', target: 'com.discord', delayMs: 120 },
+        ],
+      };
+      const normalized = normalizeDiscoveredWorkflow(legacyClaudeItem);
+      expect(normalized.workflowTitle).toBe('Terminal Debugging & AI Assistance Flow');
+      expect(normalized.steps?.some((s) => s.target === 'com.anthropic.claude')).toBe(false);
+      expect(normalized.steps?.some((s) => s.target === 'com.google.android.apps.bard')).toBe(true);
+    });
+  });
+
+  describe('normalizeRegistryItem', () => {
+    it('normalizes legacy Claude item to Google Gemini', () => {
+      const legacyItem: any = {
+        id: 'auto-2',
+        name: 'Claude',
+        canonicalIdentity: 'com.anthropic.claude',
+        actionPayload: 'com.anthropic.claude',
+        description: 'Instant prompt into Claude workspace.',
+      };
+      const normalized = normalizeRegistryItem(legacyItem);
+      expect(normalized.name).toBe('Google Gemini');
+      expect(normalized.canonicalIdentity).toBe('com.google.android.apps.bard');
+      expect(normalized.actionPayload).toBe('com.google.android.apps.bard');
+      expect(normalized.description).toContain('Google Gemini');
+    });
+
+    it('replaces Claude in multi-step item steps with Google Gemini', () => {
+      const multiStepItem: any = {
+        id: 'auto-multi',
+        name: 'Research Pipeline',
+        steps: [
+          { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp' },
+          { order: 2, label: 'Claude AI', target: 'com.anthropic.claude' },
+          { order: 3, label: 'Gmail', target: 'com.google.android.gm' },
+        ],
+      };
+      const normalized = normalizeRegistryItem(multiStepItem);
+      expect(normalized.steps?.[1].label).toBe('Google Gemini');
+      expect(normalized.steps?.[1].target).toBe('com.google.android.apps.bard');
+    });
   });
 
   describe('parseStepsFromPayload', () => {
@@ -215,6 +269,7 @@ describe('defaultAutomations', () => {
     it('returns false for user apps', () => {
       expect(isSystemComponent('com.android.chrome')).toBe(false);
       expect(isSystemComponent('co.mangotechnologies.clickup')).toBe(false);
+      expect(isSystemComponent('Google Gemini')).toBe(false);
       expect(isSystemComponent('Claude AI')).toBe(false);
       expect(isSystemComponent('com.whatsapp')).toBe(false);
     });

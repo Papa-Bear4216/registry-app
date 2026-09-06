@@ -6,7 +6,7 @@ import { useRegistryItems } from '../../hooks/useRegistryItems';
 import { initializeFirebaseApp } from '../../firebase/config';
 import { StatusBadge } from '../../components/StatusBadge';
 import { isRealAutomation } from '../../lib/shortcutFilter';
-import { SEEDED_ACTIVE_AUTOMATIONS, executeAutomation, parseStepsFromPayload } from '../../lib/defaultAutomations';
+import { SEEDED_ACTIVE_AUTOMATIONS, executeAutomation, parseStepsFromPayload, normalizeRegistryItem } from '../../lib/defaultAutomations';
 import { ItemStatus } from '../../types/enums';
 import { RegistryItem, WorkflowStep } from '../../types/models';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -60,7 +60,7 @@ export function RegistryListScreen({ navigation }: Props) {
 
   // Merge Firestore items with seeded automations to guarantee an active, runnable suite
   const allItems = useMemo(() => {
-    const realFirestore = items.filter(isRealAutomation);
+    const realFirestore = items.filter(isRealAutomation).map(normalizeRegistryItem);
     const existingNames = new Set(realFirestore.map((i) => i.name.toLowerCase()));
     const missingSeeds = SEEDED_ACTIVE_AUTOMATIONS.filter((s) => !existingNames.has(s.name.toLowerCase()));
     return [...realFirestore, ...missingSeeds];

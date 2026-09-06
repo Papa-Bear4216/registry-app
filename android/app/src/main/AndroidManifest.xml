@@ -25,6 +25,7 @@
     <package android:name="com.google.android.calendar"/>
     <package android:name="us.zoom.videomeetings"/>
     <package android:name="com.codespaceapps.listeningapp"/>
+    <package android:name="com.google.android.apps.bard"/>
     <intent>
       <action android:name="android.intent.action.DIAL"/>
     </intent>

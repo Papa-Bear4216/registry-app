@@ -42,9 +42,17 @@ class UsageCollectorWorker @AssistedInject constructor(
 ) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
-        // 1. Verify Firebase Auth — must be signed in
+        // 1. Verify sync prerequisites (auth + usage stats permission)
+        if (!CollectorScheduler.isSyncReady(applicationContext)) {
+            Log.w(TAG, "doWork: sync prerequisites not met (auth or permission missing), cancelling periodic work")
+            CollectorScheduler.cancel(applicationContext)
+            return Result.failure()
+        }
+
+        // 2. Verify Firebase Auth — must be signed in
         val user = FirebaseAuth.getInstance().currentUser ?: run {
-            Log.w(TAG, "doWork: no signed-in FirebaseAuth user, failing")
+            Log.w(TAG, "doWork: no signed-in FirebaseAuth user, cancelling periodic work")
+            CollectorScheduler.cancel(applicationContext)
             return Result.failure()
         }
 

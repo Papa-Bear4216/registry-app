@@ -15,6 +15,8 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
+import com.registry.coach.device.AiCoreState
+
 /**
  * Mandatory pre-permission disclosure screen (spec section 7, 11.5).
  *
@@ -34,14 +36,14 @@ class ConsentDisclosureActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Check AICore availability first
+        // Check AICore availability
         val app = application as CoachApplication
         MainScope().launch {
-            app.aiCoreAvailable.collectLatest { available ->
-                if (!available) {
-                    showNotSupported()
-                } else {
-                    showDisclosure()
+            app.aiCoreState.collectLatest { state ->
+                when (state) {
+                    AiCoreState.AVAILABLE -> showDisclosure()
+                    AiCoreState.DOWNLOADABLE -> showDownloadable()
+                    AiCoreState.UNAVAILABLE -> showNotSupported()
                 }
             }
         }
@@ -50,6 +52,39 @@ class ConsentDisclosureActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         updatePermissionStatus()
+    }
+
+    private fun showDownloadable() {
+        val padding = (24 * resources.displayMetrics.density).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padding, padding * 2, padding, padding)
+        }
+
+        layout.addView(TextView(this).apply {
+            text = getString(R.string.aicore_downloadable_title)
+            textSize = 24f
+            setPadding(0, 0, 0, padding)
+        })
+        layout.addView(TextView(this).apply {
+            text = getString(R.string.aicore_downloadable_message)
+            textSize = 16f
+            setPadding(0, 0, 0, padding)
+        })
+        layout.addView(Button(this).apply {
+            text = getString(R.string.open_play_store)
+            setOnClickListener {
+                try {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.aicore"))
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.aicore"))
+                    startActivity(intent)
+                }
+            }
+        })
+
+        setContentView(layout)
     }
 
     private fun showNotSupported() {

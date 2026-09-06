@@ -20,5 +20,8 @@
     <string name="notification_active">Registry Coach is monitoring your app usage</string>
     <string name="not_supported_title">Device Not Supported</string>
     <string name="not_supported_message">Registry Coach requires on-device AI capabilities that are not available on this device.</string>
+    <string name="aicore_downloadable_title">Gemini Nano Setup Required</string>
+    <string name="aicore_downloadable_message">Your device supports on-device Gemini Nano, but Google AICore or the model is still downloading or updating. Please ensure AICore is updated in Google Play Store, then reopen Registry Coach.</string>
+    <string name="open_play_store">Open Google Play Store</string>
     <string name="sign_in">Sign In</string>
 </resources>

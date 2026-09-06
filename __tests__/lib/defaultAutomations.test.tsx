@@ -142,47 +142,73 @@ describe('defaultAutomations', () => {
   });
 
   describe('normalizeDiscoveredWorkflow', () => {
-    it('synthesizes raw listeningapp package into 3-step Academic Audio Research & Gmail Outreach', () => {
+    it('synthesizes raw listeningapp package into 2-step Audio Research Synthesis flow', () => {
       const rawItem: any = {
         id: 'test-1',
         rawLabel: 'com.codespaceapps.listeningapp',
         rawIdentity: 'com.codespaceapps.listeningapp',
       };
       const normalized = normalizeDiscoveredWorkflow(rawItem);
-      expect(normalized.workflowTitle).toBe('Academic Audio Research & Gmail Outreach');
-      expect(normalized.steps).toHaveLength(3);
+      expect(normalized.workflowTitle).toBe('Audio Research Synthesis (Listening App ➔ Google Gemini)');
+      expect(normalized.steps).toHaveLength(2);
       expect(normalized.steps?.[0].label).toBe('Listening App');
       expect(normalized.steps?.[1].label).toBe('Google Gemini');
-      expect(normalized.steps?.[2].label).toBe('Gmail Outreach');
-      expect(normalized.steps?.[2].target).toBe('com.google.android.gm');
+      expect(normalized.steps?.[1].target).toBe('com.google.android.apps.bard');
       expect(normalized.steps?.every((s) => s.delayMs === 120)).toBe(true);
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
     });
 
-    it('synthesizes raw outlook package into 3-step Meeting Prep pipeline', () => {
+    it('synthesizes raw outlook package into 2-step Meeting Attendance Routine', () => {
       const rawItem: any = {
         id: 'test-2',
         rawLabel: 'com.microsoft.office.outlook',
         rawIdentity: 'com.microsoft.office.outlook',
       };
       const normalized = normalizeDiscoveredWorkflow(rawItem);
-      expect(normalized.workflowTitle).toBe('Meeting Prep & Discord Standup Dispatch');
-      expect(normalized.steps).toHaveLength(3);
+      expect(normalized.workflowTitle).toBe('Meeting Attendance Routine (Google Calendar ➔ Zoom Meetings)');
+      expect(normalized.steps).toHaveLength(2);
       expect(normalized.steps?.[0].label).toBe('Google Calendar');
-      expect(normalized.steps?.[1].label).toBe('Zoom Room');
-      expect(normalized.steps?.[2].label).toBe('Discord Standup');
+      expect(normalized.steps?.[1].label).toBe('Zoom Meetings');
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
     });
 
-    it('synthesizes raw single word Weather into 3-step morning briefing with Home Assistant', () => {
+    it('synthesizes raw single word Weather into 2-step morning wake routine with Calendar', () => {
       const rawItem: any = {
         id: 'test-3',
         rawLabel: 'Weather',
       };
       const normalized = normalizeDiscoveredWorkflow(rawItem);
-      expect(normalized.workflowTitle).toBe('Morning Weather & Smart Home Dispatch');
-      expect(normalized.steps).toHaveLength(3);
+      expect(normalized.workflowTitle).toBe('Morning Wake Routine (Samsung Weather ➔ Google Calendar)');
+      expect(normalized.steps).toHaveLength(2);
       expect(normalized.steps?.[0].label).toBe('Samsung Weather');
-      expect(normalized.steps?.[1].label).toBe('Home Assistant');
-      expect(normalized.steps?.[2].label).toBe('Google Calendar');
+      expect(normalized.steps?.[1].label).toBe('Google Calendar');
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
+    });
+
+    it('normalizes generic package into 1-step observed pattern without synthetic ClickUp routing', () => {
+      const rawItem: any = {
+        id: 'test-chrome',
+        rawLabel: 'com.android.chrome',
+        rawIdentity: 'com.android.chrome',
+      };
+      const normalized = normalizeDiscoveredWorkflow(rawItem);
+      expect(normalized.workflowTitle).toBe('Google Chrome (Web Research Pattern)');
+      expect(normalized.steps).toHaveLength(1);
+      expect(normalized.steps?.[0].target).toBe('com.android.chrome');
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
+    });
+
+    it('normalizes arbitrary unknown package into 1-step observed pattern', () => {
+      const rawItem: any = {
+        id: 'test-spotify',
+        rawLabel: 'com.spotify.music',
+        rawIdentity: 'com.spotify.music',
+      };
+      const normalized = normalizeDiscoveredWorkflow(rawItem);
+      expect(normalized.workflowTitle).toContain('Observed Pattern');
+      expect(normalized.steps).toHaveLength(1);
+      expect(normalized.steps?.[0].target).toBe('com.spotify.music');
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
     });
 
     it('purges legacy Samsung Notes references and re-normalizes to productive flow', () => {
@@ -199,6 +225,7 @@ describe('defaultAutomations', () => {
       expect(normalized.workflowTitle).not.toContain('Notes');
       expect(normalized.steps?.some((s) => s.target === 'com.samsung.android.app.notes')).toBe(false);
       expect(normalized.steps?.every((s) => s.delayMs === 120)).toBe(true);
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
     });
 
     it('purges legacy Claude references and re-normalizes to Google Gemini flow', () => {
@@ -213,9 +240,9 @@ describe('defaultAutomations', () => {
         ],
       };
       const normalized = normalizeDiscoveredWorkflow(legacyClaudeItem);
-      expect(normalized.workflowTitle).toBe('Terminal Debugging & AI Assistance Flow');
+      expect(normalized.workflowTitle).toBe('Termux Terminal (Development Pattern)');
       expect(normalized.steps?.some((s) => s.target === 'com.anthropic.claude')).toBe(false);
-      expect(normalized.steps?.some((s) => s.target === 'com.google.android.apps.bard')).toBe(true);
+      expect(JSON.stringify(normalized).toLowerCase()).not.toContain('clickup');
     });
   });
 

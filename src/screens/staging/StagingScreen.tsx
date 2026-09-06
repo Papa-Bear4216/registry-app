@@ -118,10 +118,10 @@ export function StagingScreen({ navigation }: Props) {
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
         <Text style={{ fontSize: 13, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5 }}>
-          GEMINI NANO PATTERN DISCOVERY
+          OBSERVED WORKFLOWS & USER PATTERNS
         </Text>
         <Text style={{ fontSize: 12, color: '#9CA3AF', marginTop: 2 }}>
-          Observed task gaps and synthesized workflow shortcuts ready for test or graduation.
+          Documenting real user behavior to establish a firm logic base before imagining workflow automations.
         </Text>
       </View>
 
@@ -147,14 +147,14 @@ export function StagingScreen({ navigation }: Props) {
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, paddingRight: 8 }}>
-                <Text style={{ fontSize: 18, marginRight: 8 }}>⚡</Text>
+                <Text style={{ fontSize: 18, marginRight: 8 }}>{item.steps && item.steps.length > 1 ? '🔗' : '📊'}</Text>
                 <Text style={{ fontWeight: '700', fontSize: 15, color: '#111827', flex: 1 }}>
                   {item.workflowTitle || item.rawLabel}
                 </Text>
               </View>
-              <View style={{ backgroundColor: '#EEF2FF', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: '#4F46E5' }}>
-                  {item.steps && item.steps.length > 1 ? `${item.steps.length}-Step Flow` : 'Shortcut'}
+              <View style={{ backgroundColor: item.steps && item.steps.length > 1 ? '#EFF6FF' : '#F3F4F6', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: '700', color: item.steps && item.steps.length > 1 ? '#1D4ED8' : '#4B5563' }}>
+                  {item.steps && item.steps.length > 1 ? `Observed Switch (${item.steps.length} Steps)` : 'Observed Habit'}
                 </Text>
               </View>
             </View>
@@ -162,7 +162,7 @@ export function StagingScreen({ navigation }: Props) {
             {item.steps && item.steps.length > 0 && (
               <View style={{ backgroundColor: '#F8FAFC', borderRadius: 8, padding: 8, marginVertical: 6, borderWidth: 1, borderColor: '#E2E8F0' }}>
                 <Text style={{ fontSize: 10, fontWeight: '700', color: '#64748B', textTransform: 'uppercase', marginBottom: 4, letterSpacing: 0.5 }}>
-                  Sequential Workflow Steps
+                  {item.steps.length > 1 ? 'Observed App Sequence' : 'Observed Target Application'}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4 }}>
                   {item.steps.map((step, idx) => (
@@ -182,9 +182,9 @@ export function StagingScreen({ navigation }: Props) {
             )}
 
             {item.triggerDescription && (
-              <View style={{ backgroundColor: '#EFF6FF', borderRadius: 6, padding: 6, marginVertical: 4 }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#1D4ED8' }}>
-                  🎯 Trigger: {item.triggerDescription}
+              <View style={{ backgroundColor: '#F0FDF4', borderColor: '#DCFCE7', borderWidth: 1, borderRadius: 6, padding: 6, marginVertical: 4 }}>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: '#166534' }}>
+                  🎯 Logic Base: {item.triggerDescription}
                 </Text>
               </View>
             )}
@@ -222,7 +222,7 @@ export function StagingScreen({ navigation }: Props) {
                 testID={`test-${item.id}`}
               >
                 <Text style={{ color: 'white', fontWeight: '600', fontSize: 12 }}>
-                  ⚡ Test Run ({item.steps?.length || 1} {item.steps && item.steps.length > 1 ? 'Steps' : 'Step'})
+                  {item.steps && item.steps.length > 1 ? `⚡ Test Flow (${item.steps.length} Steps)` : `⚡ Launch App`}
                 </Text>
               </Pressable>
 
@@ -239,7 +239,7 @@ export function StagingScreen({ navigation }: Props) {
                 }}
                 testID={`approve-${item.id}`}
               >
-                <Text style={{ color: 'white', fontWeight: '600', fontSize: 12 }}>Approve & Keep</Text>
+                <Text style={{ color: 'white', fontWeight: '600', fontSize: 12 }}>Approve & Track</Text>
               </Pressable>
 
               <Pressable

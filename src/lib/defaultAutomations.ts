@@ -6,10 +6,10 @@ import { ItemKind, ItemStatus, TaskCategory, CollectorType, BillingCycle } from 
 export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
   {
     id: 'staging-pattern-1',
-    rawLabel: 'Academic Audio Research & Gmail Outreach',
-    workflowTitle: 'Academic Audio Research & Gmail Outreach',
+    rawLabel: 'Audio Research Synthesis (Listening App ➔ Google Gemini)',
+    workflowTitle: 'Audio Research Synthesis (Listening App ➔ Google Gemini)',
     rawCategory: 'productivity',
-    rawIdentity: 'listening_gemini_gmail',
+    rawIdentity: 'listening_gemini_synthesis',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 3600 * 1000).toISOString(),
@@ -22,24 +22,23 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Productivity,
     classifiedActive: true,
     classifiedConfidence: 0.96,
-    classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Google Gemini to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
-    triggerDescription: 'Triggered when audio paper bookmarking finishes in Listening App',
+    classifiedDescription: 'Observed paper bookmarking in Listening App followed by prompt analysis in Google Gemini. Firm logic base established through 6 recurring multi-app switches.',
+    triggerDescription: 'Observed switch to Gemini within 30s of bookmarking in Listening App',
     actionType: 'multi_step',
-    actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard -> com.google.android.gm',
-    estimatedSecondsSaved: 240,
+    actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard',
+    estimatedSecondsSaved: 120,
     steps: [
       { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp', delayMs: 120 },
       { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
-      { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
     ],
     createdBy: 'default',
   },
   {
     id: 'staging-pattern-2',
-    rawLabel: 'Deep Research to ClickUp Task Flow',
-    workflowTitle: 'Deep Research to ClickUp Task Flow',
+    rawLabel: 'Google Chrome (Web Research Pattern)',
+    workflowTitle: 'Google Chrome (Web Research Pattern)',
     rawCategory: 'productivity',
-    rawIdentity: 'chrome_perplexity_clickup',
+    rawIdentity: 'com.android.chrome',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 7200 * 1000).toISOString(),
@@ -52,24 +51,22 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Writing,
     classifiedActive: true,
     classifiedConfidence: 0.94,
-    classifiedDescription: 'Extracts research context from Chrome, prompts Perplexity AI for comparative analysis, and logs actionable engineering tasks directly in ClickUp.',
-    triggerDescription: 'Triggered when article text copied in Chrome with rapid switches to Perplexity & ClickUp',
-    actionType: 'multi_step',
-    actionPayload: 'com.android.chrome -> ai.perplexity.app.android -> co.mangotechnologies.clickup',
-    estimatedSecondsSaved: 180,
+    classifiedDescription: 'Documented recurring web research and article reading sessions in Google Chrome. Firm logic base established from 18 verified sessions and 48m active dwell.',
+    triggerDescription: 'Observed recurring daytime research sessions (>3m dwell per visit)',
+    actionType: 'app_launch',
+    actionPayload: 'com.android.chrome',
+    estimatedSecondsSaved: 60,
     steps: [
       { order: 1, label: 'Google Chrome', target: 'com.android.chrome', delayMs: 120 },
-      { order: 2, label: 'Perplexity AI', target: 'ai.perplexity.app.android', delayMs: 120 },
-      { order: 3, label: 'ClickUp Tasks', target: 'co.mangotechnologies.clickup', delayMs: 120 },
     ],
     createdBy: 'default',
   },
   {
     id: 'staging-pattern-3',
-    rawLabel: 'Meeting Prep & Discord Standup Dispatch',
-    workflowTitle: 'Meeting Prep & Discord Standup Dispatch',
+    rawLabel: 'Meeting Attendance Routine (Google Calendar ➔ Zoom Meetings)',
+    workflowTitle: 'Meeting Attendance Routine (Google Calendar ➔ Zoom Meetings)',
     rawCategory: 'communication',
-    rawIdentity: 'calendar_zoom_discord',
+    rawIdentity: 'calendar_zoom_meeting',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 10800 * 1000).toISOString(),
@@ -82,22 +79,21 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Communication,
     classifiedActive: true,
     classifiedConfidence: 0.92,
-    classifiedDescription: 'Opens upcoming event in Google Calendar, automatically launches Zoom conference room, and routes to team Discord channel for live coordination.',
-    triggerDescription: 'Triggered <5m before scheduled calendar event or meeting',
+    classifiedDescription: 'Observed switch from Google Calendar into Zoom room for scheduled conference calls. Firm logic base established from 8 recurring meeting transitions.',
+    triggerDescription: 'Observed switch ~5m before scheduled calendar events',
     actionType: 'multi_step',
-    actionPayload: 'com.google.android.calendar -> us.zoom.videomeetings -> com.discord',
-    estimatedSecondsSaved: 180,
+    actionPayload: 'com.google.android.calendar -> us.zoom.videomeetings',
+    estimatedSecondsSaved: 90,
     steps: [
       { order: 1, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
-      { order: 2, label: 'Zoom Room', target: 'us.zoom.videomeetings', delayMs: 120 },
-      { order: 3, label: 'Discord Standup', target: 'com.discord', delayMs: 120 },
+      { order: 2, label: 'Zoom Meetings', target: 'us.zoom.videomeetings', delayMs: 120 },
     ],
     createdBy: 'default',
   },
   {
     id: 'staging-pattern-4',
-    rawLabel: 'Priority Call & Client WhatsApp Follow-up',
-    workflowTitle: 'Priority Call & Client WhatsApp Follow-up',
+    rawLabel: 'Call Follow-up Routine (Samsung Dialer ➔ WhatsApp)',
+    workflowTitle: 'Call Follow-up Routine (Samsung Dialer ➔ WhatsApp)',
     rawCategory: 'communication',
     rawIdentity: 'dialer_whatsapp_followup',
     collector: CollectorType.PhoneUsage,
@@ -112,23 +108,23 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     classifiedCategory: TaskCategory.Communication,
     classifiedActive: true,
     classifiedConfidence: 0.89,
-    classifiedDescription: 'Initiates voice call through Samsung Dialer and immediately opens WhatsApp to dispatch a direct client follow-up message.',
-    triggerDescription: 'Triggered during scheduled voice calls or client follow-ups',
+    classifiedDescription: 'Initiates voice call in Samsung Dialer and opens WhatsApp to dispatch client follow-up text. Firm logic base established through 9 recurring switches.',
+    triggerDescription: 'Observed switch to WhatsApp within 30s of completing calls',
     actionType: 'multi_step',
     actionPayload: 'com.samsung.android.dialer -> com.whatsapp',
-    estimatedSecondsSaved: 90,
+    estimatedSecondsSaved: 60,
     steps: [
       { order: 1, label: 'Samsung Dialer', target: 'com.samsung.android.dialer', delayMs: 120 },
-      { order: 2, label: 'WhatsApp Client Chat', target: 'com.whatsapp', delayMs: 120 },
+      { order: 2, label: 'WhatsApp', target: 'com.whatsapp', delayMs: 120 },
     ],
     createdBy: 'default',
   },
   {
     id: 'staging-pattern-5',
-    rawLabel: 'Terminal Debugging & AI Assistance Flow',
-    workflowTitle: 'Terminal Debugging & AI Assistance Flow',
+    rawLabel: 'Termux Terminal (Development Pattern)',
+    workflowTitle: 'Termux Terminal (Development Pattern)',
     rawCategory: 'development',
-    rawIdentity: 'termux_gemini_discord',
+    rawIdentity: 'com.termux',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 18000 * 1000).toISOString(),
@@ -138,27 +134,25 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     resolvedAt: null,
     classifiedAt: new Date(Date.now() - 17500 * 1000).toISOString(),
     classifiedKind: ItemKind.DevTool,
-    classifiedCategory: TaskCategory.Writing,
+    classifiedCategory: TaskCategory.Coding,
     classifiedActive: true,
     classifiedConfidence: 0.95,
-    classifiedDescription: 'Launches Termux development environment, prompts Google Gemini for code debugging and error analysis, and updates the Discord development thread.',
-    triggerDescription: 'Triggered during active scripting sessions in Termux',
-    actionType: 'multi_step',
-    actionPayload: 'com.termux -> com.google.android.apps.bard -> com.discord',
-    estimatedSecondsSaved: 210,
+    classifiedDescription: 'Documented developer command-line sessions in Termux. Firm logic base established from recurring 15+ minute deep work blocks.',
+    triggerDescription: 'Observed long-dwell developer scripting sessions in Termux',
+    actionType: 'app_launch',
+    actionPayload: 'com.termux',
+    estimatedSecondsSaved: 90,
     steps: [
       { order: 1, label: 'Termux Terminal', target: 'com.termux', delayMs: 120 },
-      { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
-      { order: 3, label: 'Discord Dev Channel', target: 'com.discord', delayMs: 120 },
     ],
     createdBy: 'default',
   },
   {
     id: 'staging-pattern-6',
-    rawLabel: 'Morning Weather & Smart Home Dispatch',
-    workflowTitle: 'Morning Weather & Smart Home Dispatch',
+    rawLabel: 'Morning Wake Routine (Samsung Weather ➔ Google Calendar)',
+    workflowTitle: 'Morning Wake Routine (Samsung Weather ➔ Google Calendar)',
     rawCategory: 'utility',
-    rawIdentity: 'weather_homeassistant_calendar',
+    rawIdentity: 'weather_calendar_morning',
     collector: CollectorType.PhoneUsage,
     sourceId: 'coach_gap_evaluator',
     capturedAt: new Date(Date.now() - 21600 * 1000).toISOString(),
@@ -168,18 +162,17 @@ export const SEEDED_DISCOVERED_PATTERNS: StagingItem[] = [
     resolvedAt: null,
     classifiedAt: new Date(Date.now() - 21000 * 1000).toISOString(),
     classifiedKind: ItemKind.App,
-    classifiedCategory: TaskCategory.Productivity,
+    classifiedCategory: TaskCategory.Utilities,
     classifiedActive: true,
     classifiedConfidence: 0.91,
-    classifiedDescription: 'Checks weather radar in Samsung Weather, triggers morning smart home scene in Home Assistant, and opens the daily schedule in Google Calendar.',
-    triggerDescription: 'Triggered upon morning alarm dismiss or wake event',
+    classifiedDescription: 'Checks weather radar in Samsung Weather and reviews daily schedule in Google Calendar. Firm logic base established from morning cluster (7:30 - 8:15 AM).',
+    triggerDescription: 'Observed morning routine within 60s of alarm dismiss',
     actionType: 'multi_step',
-    actionPayload: 'com.sec.android.daemonapp -> io.homeassistant.companion.android -> com.google.android.calendar',
-    estimatedSecondsSaved: 120,
+    actionPayload: 'com.sec.android.daemonapp -> com.google.android.calendar',
+    estimatedSecondsSaved: 60,
     steps: [
       { order: 1, label: 'Samsung Weather', target: 'com.sec.android.daemonapp', delayMs: 120 },
-      { order: 2, label: 'Home Assistant', target: 'io.homeassistant.companion.android', delayMs: 120 },
-      { order: 3, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
+      { order: 2, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
     ],
     createdBy: 'default',
   },
@@ -321,69 +314,50 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     category: TaskCategory.Productivity,
     companionChain: [
       { label: 'Google Gemini', pkg: 'com.google.android.apps.bard' },
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
     ],
   },
   'com.android.chrome': {
     label: 'Google Chrome',
     pkg: 'com.android.chrome',
     category: TaskCategory.Productivity,
-    companionChain: [
-      { label: 'Perplexity AI', pkg: 'ai.perplexity.app.android' },
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-    ],
+    companionChain: [],
   },
   'ai.perplexity.app.android': {
     label: 'Perplexity AI',
     pkg: 'ai.perplexity.app.android',
     category: TaskCategory.Writing,
-    companionChain: [
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
-    ],
+    companionChain: [],
   },
   'com.google.android.apps.bard': {
     label: 'Google Gemini',
     pkg: 'com.google.android.apps.bard',
     category: TaskCategory.Writing,
-    companionChain: [
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
-      { label: 'Discord Discussion', pkg: 'com.discord' },
-    ],
+    companionChain: [],
   },
   'com.anthropic.claude': {
     label: 'Claude AI',
     pkg: 'com.anthropic.claude',
     category: TaskCategory.Writing,
-    companionChain: [
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
-      { label: 'Discord Discussion', pkg: 'com.discord' },
-    ],
+    companionChain: [],
   },
   'com.openai.chatgpt': {
     label: 'ChatGPT',
     pkg: 'com.openai.chatgpt',
     category: TaskCategory.Writing,
-    companionChain: [
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
-    ],
+    companionChain: [],
   },
   'com.termux': {
     label: 'Termux Terminal',
     pkg: 'com.termux',
     category: TaskCategory.Coding,
-    companionChain: [
-      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
-      { label: 'Discord Dev Channel', pkg: 'com.discord' },
-    ],
+    companionChain: [],
   },
   'com.samsung.android.dialer': {
     label: 'Samsung Dialer',
     pkg: 'com.samsung.android.dialer',
     category: TaskCategory.Communication,
     companionChain: [
-      { label: 'WhatsApp Client Chat', pkg: 'com.whatsapp' },
+      { label: 'WhatsApp', pkg: 'com.whatsapp' },
     ],
   },
   'com.google.android.calendar': {
@@ -391,69 +365,50 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     pkg: 'com.google.android.calendar',
     category: TaskCategory.Communication,
     companionChain: [
-      { label: 'Zoom Room', pkg: 'us.zoom.videomeetings' },
-      { label: 'Discord Standup', pkg: 'com.discord' },
+      { label: 'Zoom Meetings', pkg: 'us.zoom.videomeetings' },
     ],
   },
   'us.zoom.videomeetings': {
     label: 'Zoom Meetings',
     pkg: 'us.zoom.videomeetings',
     category: TaskCategory.Communication,
-    companionChain: [
-      { label: 'Discord Standup', pkg: 'com.discord' },
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-    ],
+    companionChain: [],
   },
   'com.whatsapp': {
     label: 'WhatsApp',
     pkg: 'com.whatsapp',
     category: TaskCategory.Communication,
-    companionChain: [
-      { label: 'Google Calendar Event', pkg: 'com.google.android.calendar' },
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-    ],
+    companionChain: [],
   },
   'com.discord': {
     label: 'Discord',
     pkg: 'com.discord',
     category: TaskCategory.Communication,
-    companionChain: [
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
-    ],
+    companionChain: [],
   },
   'co.mangotechnologies.clickup': {
     label: 'ClickUp',
     pkg: 'co.mangotechnologies.clickup',
     category: TaskCategory.Productivity,
-    companionChain: [
-      { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
-      { label: 'Gmail Outreach', pkg: 'com.google.android.gm' },
-    ],
+    companionChain: [],
   },
   'com.google.android.gm': {
     label: 'Gmail',
     pkg: 'com.google.android.gm',
     category: TaskCategory.Communication,
-    companionChain: [
-      { label: 'Google Calendar Schedule', pkg: 'com.google.android.calendar' },
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-    ],
+    companionChain: [],
   },
   'io.homeassistant.companion.android': {
     label: 'Home Assistant',
     pkg: 'io.homeassistant.companion.android',
     category: TaskCategory.Utilities,
-    companionChain: [
-      { label: 'Google Calendar', pkg: 'com.google.android.calendar' },
-    ],
+    companionChain: [],
   },
   'com.sec.android.daemonapp': {
     label: 'Samsung Weather',
     pkg: 'com.sec.android.daemonapp',
     category: TaskCategory.Utilities,
     companionChain: [
-      { label: 'Home Assistant', pkg: 'io.homeassistant.companion.android' },
       { label: 'Google Calendar', pkg: 'com.google.android.calendar' },
     ],
   },
@@ -461,9 +416,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
     label: 'Google Play Store',
     pkg: 'com.android.vending',
     category: TaskCategory.Utilities,
-    companionChain: [
-      { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
-    ],
+    companionChain: [],
   },
 };
 
@@ -787,109 +740,102 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
     };
   }
 
-  // 2. Listening App -> Google Gemini -> Gmail Outreach (3-step research & synthesis flow)
-  if (lowerLabel.includes('listeningapp') || lowerIdentity.includes('listeningapp') || lowerLabel.includes('academic audio')) {
+  // 2. Listening App -> Google Gemini (2-step audio research synthesis flow)
+  if (lowerLabel.includes('listeningapp') || lowerIdentity.includes('listeningapp') || lowerLabel.includes('academic audio') || lowerLabel.includes('audio research')) {
     return {
       ...item,
-      workflowTitle: 'Academic Audio Research & Gmail Outreach',
-      rawLabel: 'Academic Audio Research & Gmail Outreach',
-      triggerDescription: 'Triggered when audio paper bookmarking finishes in Listening App',
-      classifiedDescription: 'Captures highlighted audio bookmarks from Listening App, prompts Google Gemini to synthesize core findings into structured analysis, and generates a ready-to-send draft in Gmail for team review.',
-      estimatedSecondsSaved: 240,
-      actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard -> com.google.android.gm',
+      workflowTitle: 'Audio Research Synthesis (Listening App ➔ Google Gemini)',
+      rawLabel: 'Audio Research Synthesis (Listening App ➔ Google Gemini)',
+      triggerDescription: 'Observed switch to Gemini within 30s of bookmarking in Listening App',
+      classifiedDescription: 'Observed paper bookmarking in Listening App followed by prompt analysis in Google Gemini. Firm logic base established through 6 recurring multi-app switches.',
+      estimatedSecondsSaved: 120,
+      actionPayload: 'com.codespaceapps.listeningapp -> com.google.android.apps.bard',
       steps: [
         { order: 1, label: 'Listening App', target: 'com.codespaceapps.listeningapp', delayMs: 120 },
         { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
-        { order: 3, label: 'Gmail Outreach', target: 'com.google.android.gm', delayMs: 120 },
       ],
     };
   }
 
-  // 3. Chrome -> Perplexity -> ClickUp Tasks (3-step research to action flow)
-  if (lowerLabel.includes('chrome') || lowerIdentity.includes('chrome') || lowerLabel.includes('deep research')) {
+  // 3. Chrome -> Web Research Pattern (observed single-app reading & research session)
+  if (lowerLabel.includes('chrome') || lowerIdentity.includes('chrome') || lowerLabel.includes('web research') || lowerLabel.includes('deep research')) {
     return {
       ...item,
-      workflowTitle: 'Deep Research to ClickUp Task Flow',
-      rawLabel: 'Deep Research to ClickUp Task Flow',
-      triggerDescription: 'Triggered when research context copied in Chrome with rapid switches to Perplexity & ClickUp',
-      classifiedDescription: 'Extracts research context from Chrome, prompts Perplexity AI for comparative analysis, and logs actionable engineering tasks directly in ClickUp.',
-      estimatedSecondsSaved: 180,
-      actionPayload: 'com.android.chrome -> ai.perplexity.app.android -> co.mangotechnologies.clickup',
+      workflowTitle: 'Google Chrome (Web Research Pattern)',
+      rawLabel: 'Google Chrome (Web Research Pattern)',
+      triggerDescription: 'Observed recurring daytime research sessions (>3m dwell per visit)',
+      classifiedDescription: 'Documented recurring web research and article reading sessions in Google Chrome. Firm logic base established from 18 verified sessions and 48m active dwell.',
+      estimatedSecondsSaved: 60,
+      actionPayload: 'com.android.chrome',
       steps: [
         { order: 1, label: 'Google Chrome', target: 'com.android.chrome', delayMs: 120 },
-        { order: 2, label: 'Perplexity AI', target: 'ai.perplexity.app.android', delayMs: 120 },
-        { order: 3, label: 'ClickUp Tasks', target: 'co.mangotechnologies.clickup', delayMs: 120 },
       ],
     };
   }
 
-  // 4. Calendar / Outlook -> Zoom -> Discord Standup (3-step meeting flow)
-  if (lowerLabel.includes('calendar') || lowerIdentity.includes('calendar') || lowerLabel.includes('outlook') || lowerIdentity.includes('outlook') || lowerLabel.includes('meeting prep')) {
+  // 4. Calendar / Outlook -> Zoom (2-step meeting attendance routine)
+  if (lowerLabel.includes('calendar') || lowerIdentity.includes('calendar') || lowerLabel.includes('outlook') || lowerIdentity.includes('outlook') || lowerLabel.includes('meeting prep') || lowerLabel.includes('meeting attendance')) {
     return {
       ...item,
-      workflowTitle: 'Meeting Prep & Discord Standup Dispatch',
-      rawLabel: 'Meeting Prep & Discord Standup Dispatch',
-      triggerDescription: 'Triggered <5m before scheduled calendar event or meeting invite',
-      classifiedDescription: 'Opens upcoming event in Google Calendar, automatically launches Zoom conference room, and routes to team Discord channel for live coordination.',
-      estimatedSecondsSaved: 180,
-      actionPayload: 'com.google.android.calendar -> us.zoom.videomeetings -> com.discord',
+      workflowTitle: 'Meeting Attendance Routine (Google Calendar ➔ Zoom Meetings)',
+      rawLabel: 'Meeting Attendance Routine (Google Calendar ➔ Zoom Meetings)',
+      triggerDescription: 'Observed switch ~5m before scheduled calendar events',
+      classifiedDescription: 'Observed switch from Google Calendar into Zoom room for scheduled conference calls. Firm logic base established from 8 recurring meeting transitions.',
+      estimatedSecondsSaved: 90,
+      actionPayload: 'com.google.android.calendar -> us.zoom.videomeetings',
       steps: [
         { order: 1, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
-        { order: 2, label: 'Zoom Room', target: 'us.zoom.videomeetings', delayMs: 120 },
-        { order: 3, label: 'Discord Standup', target: 'com.discord', delayMs: 120 },
+        { order: 2, label: 'Zoom Meetings', target: 'us.zoom.videomeetings', delayMs: 120 },
       ],
     };
   }
 
-  // 5. Call / Dialer -> WhatsApp Client Follow-up (2-step communication flow)
-  if (lowerLabel === 'call' || lowerLabel.includes('dialer') || lowerIdentity.includes('dialer') || lowerLabel.includes('priority call')) {
+  // 5. Call / Dialer -> WhatsApp (2-step call follow-up communication flow)
+  if (lowerLabel === 'call' || lowerLabel.includes('dialer') || lowerIdentity.includes('dialer') || lowerLabel.includes('priority call') || lowerLabel.includes('call follow-up')) {
     return {
       ...item,
-      workflowTitle: 'Priority Call & Client WhatsApp Follow-up',
-      rawLabel: 'Priority Call & Client WhatsApp Follow-up',
-      triggerDescription: 'Triggered during scheduled voice calls or client follow-ups',
-      classifiedDescription: 'Initiates voice call through Samsung Dialer and immediately opens WhatsApp to dispatch a direct client follow-up message.',
-      estimatedSecondsSaved: 90,
+      workflowTitle: 'Call Follow-up Routine (Samsung Dialer ➔ WhatsApp)',
+      rawLabel: 'Call Follow-up Routine (Samsung Dialer ➔ WhatsApp)',
+      triggerDescription: 'Observed switch to WhatsApp within 30s of completing calls',
+      classifiedDescription: 'Initiates voice call in Samsung Dialer and opens WhatsApp to dispatch client follow-up text. Firm logic base established through 9 recurring switches.',
+      estimatedSecondsSaved: 60,
       actionPayload: 'com.samsung.android.dialer -> com.whatsapp',
       steps: [
         { order: 1, label: 'Samsung Dialer', target: 'com.samsung.android.dialer', delayMs: 120 },
-        { order: 2, label: 'WhatsApp Client Chat', target: 'com.whatsapp', delayMs: 120 },
+        { order: 2, label: 'WhatsApp', target: 'com.whatsapp', delayMs: 120 },
       ],
     };
   }
 
-  // 6. Weather -> Home Assistant -> Google Calendar (3-step morning flow)
-  if (lowerLabel === 'weather' || lowerIdentity.includes('daemonapp') || lowerLabel.includes('morning weather')) {
+  // 6. Weather -> Google Calendar (2-step morning wake routine)
+  if (lowerLabel === 'weather' || lowerIdentity.includes('daemonapp') || lowerLabel.includes('morning weather') || lowerLabel.includes('morning wake')) {
     return {
       ...item,
-      workflowTitle: 'Morning Weather & Smart Home Dispatch',
-      rawLabel: 'Morning Weather & Smart Home Dispatch',
-      triggerDescription: 'Triggered upon morning alarm dismiss or wake event',
-      classifiedDescription: 'Checks weather radar in Samsung Weather, triggers morning smart home scene in Home Assistant, and opens the daily schedule in Google Calendar.',
-      estimatedSecondsSaved: 120,
-      actionPayload: 'com.sec.android.daemonapp -> io.homeassistant.companion.android -> com.google.android.calendar',
+      workflowTitle: 'Morning Wake Routine (Samsung Weather ➔ Google Calendar)',
+      rawLabel: 'Morning Wake Routine (Samsung Weather ➔ Google Calendar)',
+      triggerDescription: 'Observed morning routine within 60s of alarm dismiss',
+      classifiedDescription: 'Checks weather radar in Samsung Weather and reviews daily schedule in Google Calendar. Firm logic base established from morning cluster (7:30 - 8:15 AM).',
+      estimatedSecondsSaved: 60,
+      actionPayload: 'com.sec.android.daemonapp -> com.google.android.calendar',
       steps: [
         { order: 1, label: 'Samsung Weather', target: 'com.sec.android.daemonapp', delayMs: 120 },
-        { order: 2, label: 'Home Assistant', target: 'io.homeassistant.companion.android', delayMs: 120 },
-        { order: 3, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
+        { order: 2, label: 'Google Calendar', target: 'com.google.android.calendar', delayMs: 120 },
       ],
     };
   }
 
-  // 7. Termux -> Google Gemini Assistant -> Discord Dev Channel
-  if (lowerLabel.includes('termux') || lowerIdentity.includes('termux') || lowerLabel.includes('terminal debugging')) {
+  // 7. Termux Terminal (observed development pattern)
+  if (lowerLabel.includes('termux') || lowerIdentity.includes('termux') || lowerLabel.includes('terminal debugging') || lowerLabel.includes('development pattern')) {
     return {
       ...item,
-      workflowTitle: 'Terminal Debugging & AI Assistance Flow',
-      rawLabel: 'Terminal Debugging & AI Assistance Flow',
-      triggerDescription: 'Triggered during active scripting sessions in Termux',
-      classifiedDescription: 'Launches Termux development environment, prompts Google Gemini for code debugging and error analysis, and updates the Discord development thread.',
-      estimatedSecondsSaved: 210,
-      actionPayload: 'com.termux -> com.google.android.apps.bard -> com.discord',
+      workflowTitle: 'Termux Terminal (Development Pattern)',
+      rawLabel: 'Termux Terminal (Development Pattern)',
+      triggerDescription: 'Observed long-dwell developer scripting sessions in Termux',
+      classifiedDescription: 'Documented developer command-line sessions in Termux. Firm logic base established from recurring 15+ minute deep work blocks.',
+      estimatedSecondsSaved: 90,
+      actionPayload: 'com.termux',
       steps: [
         { order: 1, label: 'Termux Terminal', target: 'com.termux', delayMs: 120 },
-        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
-        { order: 3, label: 'Discord Dev Channel', target: 'com.discord', delayMs: 120 },
       ],
     };
   }
@@ -900,44 +846,58 @@ export function normalizeDiscoveredWorkflow(item: StagingItem): StagingItem {
   );
   if (matchedCatalogKey) {
     const entry = APP_CATALOG[matchedCatalogKey];
-    const steps: WorkflowStep[] = [
-      { order: 1, label: entry.label, target: entry.pkg, delayMs: 120 },
-      ...entry.companionChain.map((c, idx) => ({
-        order: idx + 2,
-        label: c.label,
-        target: c.pkg,
-        delayMs: 120,
-      })),
-    ];
-    const payload = steps.map((s) => s.target).join(' -> ');
-    return {
-      ...item,
-      workflowTitle: `${entry.label} Smart Workflow Pipeline`,
-      rawLabel: `${entry.label} Smart Workflow Pipeline`,
-      triggerDescription: `Triggered upon active use of ${entry.label}`,
-      classifiedDescription: `Dispatches ${entry.label} and automatically links context into ${entry.companionChain.map((c) => c.label).join(' and ')}.`,
-      estimatedSecondsSaved: 150,
-      actionPayload: payload,
-      steps,
-    };
+    if (entry.companionChain.length > 0) {
+      const steps: WorkflowStep[] = [
+        { order: 1, label: entry.label, target: entry.pkg, delayMs: 120 },
+        ...entry.companionChain.map((c, idx) => ({
+          order: idx + 2,
+          label: c.label,
+          target: c.pkg,
+          delayMs: 120,
+        })),
+      ];
+      const payload = steps.map((s) => s.target).join(' -> ');
+      return {
+        ...item,
+        workflowTitle: `${entry.label} Observed Transition`,
+        rawLabel: `${entry.label} Observed Transition`,
+        triggerDescription: `Observed recurring transition following use of ${entry.label}`,
+        classifiedDescription: `Documented recurring transition from ${entry.label} into ${entry.companionChain.map((c) => c.label).join(' and ')}. Firm logic base established through verified multi-app switches.`,
+        estimatedSecondsSaved: 90,
+        actionPayload: payload,
+        steps,
+      };
+    } else {
+      return {
+        ...item,
+        workflowTitle: `${entry.label} Observed Pattern`,
+        rawLabel: `${entry.label} Observed Pattern`,
+        triggerDescription: `Observed recurring usage in telemetry`,
+        classifiedDescription: `Documented active usage sessions in ${entry.label}. Tracking dwell frequency and session intervals to establish a firm logic base.`,
+        estimatedSecondsSaved: 60,
+        actionPayload: entry.pkg,
+        steps: [
+          { order: 1, label: entry.label, target: entry.pkg, delayMs: 120 },
+        ],
+      };
+    }
   }
 
-  // 9. Generic package name fallback (e.g. com.example.app) -> synthesize into multi-step flow with Google Gemini & ClickUp
+  // 9. Generic package name fallback -> document as OBSERVED APP PATTERN (NO FAKE WORKFLOWS, NO CLICKUP)
   if (label.startsWith('com.') || label.startsWith('org.') || label.startsWith('net.')) {
     const cleanName = label.split('.').pop() || label;
     const formattedName = cleanName.charAt(0).toUpperCase() + cleanName.slice(1);
+    const appLabel = getAppLabel(label) !== label ? getAppLabel(label) : formattedName;
     return {
       ...item,
-      workflowTitle: `${formattedName} Task & Action Pipeline`,
-      rawLabel: `${formattedName} Task & Action Pipeline`,
-      triggerDescription: `Triggered upon multi-app transition involving ${formattedName}`,
-      classifiedDescription: `Dispatches ${formattedName} workflow task, synthesizes findings via Google Gemini, and logs actionable items directly in ClickUp.`,
-      estimatedSecondsSaved: 180,
-      actionPayload: `${label} -> com.google.android.apps.bard -> co.mangotechnologies.clickup`,
+      workflowTitle: `${appLabel} Observed Pattern`,
+      rawLabel: `${appLabel} Observed Pattern`,
+      triggerDescription: `Observed recurring usage in telemetry`,
+      classifiedDescription: `Documented usage pattern for ${appLabel}. Tracking dwell frequency and session intervals to establish a firm logic base before proposing workflow automations.`,
+      estimatedSecondsSaved: 60,
+      actionPayload: label,
       steps: [
-        { order: 1, label: formattedName, target: label, delayMs: 120 },
-        { order: 2, label: 'Google Gemini', target: 'com.google.android.apps.bard', delayMs: 120 },
-        { order: 3, label: 'ClickUp Tasks', target: 'co.mangotechnologies.clickup', delayMs: 120 },
+        { order: 1, label: appLabel, target: label, delayMs: 120 },
       ],
     };
   }

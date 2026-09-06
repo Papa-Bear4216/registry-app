@@ -1,11 +1,7 @@
 package com.registry.coach.ui
 
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.os.Build
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
 import android.widget.LinearLayout
 import android.widget.Switch
 import android.widget.TextView
@@ -70,8 +66,6 @@ class CoachSettingsActivity : AppCompatActivity() {
         layout.addView(coachToggle)
 
         setContentView(layout)
-
-        createNotificationChannel()
     }
 
     override fun onResume() {
@@ -90,52 +84,5 @@ class CoachSettingsActivity : AppCompatActivity() {
             if (isRunning) R.string.coach_enabled else R.string.coach_disabled
         )
         coachToggle.isChecked = isRunning
-
-        // Show/hide persistent notification based on actual status
-        if (isRunning) {
-            showActiveNotification()
-        } else {
-            hideActiveNotification()
-        }
-    }
-
-    /**
-     * Persistent low-priority notification (spec section 7).
-     * Required because silently-running accessibility services are
-     * the primary trust complaint against this category of app.
-     */
-    private fun showActiveNotification() {
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_info_details)
-            .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.notification_active))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setOngoing(true)
-            .build()
-
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.notify(NOTIFICATION_ID, notification)
-    }
-
-    private fun hideActiveNotification() {
-        val manager = getSystemService(NotificationManager::class.java)
-        manager.cancel(NOTIFICATION_ID)
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                CHANNEL_ID,
-                getString(R.string.notification_channel_name),
-                NotificationManager.IMPORTANCE_LOW,
-            )
-            val manager = getSystemService(NotificationManager::class.java)
-            manager.createNotificationChannel(channel)
-        }
-    }
-
-    companion object {
-        private const val CHANNEL_ID = "coach_active"
-        private const val NOTIFICATION_ID = 1001
     }
 }

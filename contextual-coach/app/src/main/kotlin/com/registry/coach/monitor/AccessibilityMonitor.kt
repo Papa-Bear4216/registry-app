@@ -1,9 +1,14 @@
 package com.registry.coach.monitor
 
 import android.accessibilityservice.AccessibilityService
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
+import androidx.core.app.NotificationCompat
+import com.registry.coach.R
 import com.registry.coach.data.LocalRankingCache
 import com.registry.coach.evaluator.GapEvaluator
 import com.registry.coach.evaluator.GapResult
@@ -52,6 +57,8 @@ class AccessibilityMonitor : AccessibilityService() {
 
     override fun onServiceConnected() {
         super.onServiceConnected()
+        createNotificationChannel()
+        showActiveNotification()
         systemPackages = loadSystemPackages()
         rankingCache.startListening()
     }
@@ -119,10 +126,51 @@ class AccessibilityMonitor : AccessibilityService() {
         dwellTimer.cancel()
     }
 
+    override fun onUnbind(intent: Intent?): Boolean {
+        hideActiveNotification()
+        return super.onUnbind(intent)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
+        hideActiveNotification()
         dwellTimer.cancel()
         rankingCache.stopListening()
+    }
+
+    /**
+     * Persistent low-priority notification (spec section 7).
+     * Required because silently-running accessibility services are
+     * the primary trust complaint against this category of app.
+     */
+    private fun showActiveNotification() {
+        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.ic_menu_info_details)
+            .setContentTitle(getString(R.string.app_name))
+            .setContentText(getString(R.string.notification_active))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setOngoing(true)
+            .build()
+
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun hideActiveNotification() {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager?.cancel(NOTIFICATION_ID)
+    }
+
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.notification_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            )
+            val manager = getSystemService(NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
     }
 
     /** Load the set of system-installed package names for isSystemApp checks. */
@@ -148,5 +196,10 @@ class AccessibilityMonitor : AccessibilityService() {
         } catch (e: Exception) {
             emptySet()
         }
+    }
+
+    companion object {
+        const val CHANNEL_ID = "coach_active"
+        const val NOTIFICATION_ID = 1001
     }
 }

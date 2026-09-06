@@ -1,6 +1,9 @@
 package com.registry.collector.worker
 
+import android.app.AppOpsManager
 import android.content.Context
+import android.os.Build
+import android.os.Process
 import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -8,6 +11,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.google.firebase.auth.FirebaseAuth
 import java.util.concurrent.TimeUnit
 
 /**
@@ -46,6 +50,43 @@ object CollectorScheduler {
             ExistingPeriodicWorkPolicy.KEEP,
             request,
         )
+    }
+
+    /**
+     * Cancel the periodic sync.
+     * Called when auth or usage stats permission is lost.
+     */
+    fun cancel(context: Context) {
+        WorkManager.getInstance(context).cancelUniqueWork(UNIQUE_WORK_NAME)
+    }
+
+    /**
+     * Checks if the app currently holds the PACKAGE_USAGE_STATS permission.
+     */
+    fun hasUsageStatsPermission(context: Context): Boolean {
+        val appOps = context.getSystemService(Context.APP_OPS_SERVICE) as? AppOpsManager ?: return false
+        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            appOps.unsafeCheckOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName,
+            )
+        } else {
+            @Suppress("DEPRECATION")
+            appOps.checkOpNoThrow(
+                AppOpsManager.OPSTR_GET_USAGE_STATS,
+                Process.myUid(),
+                context.packageName,
+            )
+        }
+        return mode == AppOpsManager.MODE_ALLOWED
+    }
+
+    /**
+     * Periodic sync is ready only when user is authenticated and usage stats permission is granted.
+     */
+    fun isSyncReady(context: Context): Boolean {
+        return FirebaseAuth.getInstance().currentUser != null && hasUsageStatsPermission(context)
     }
 
     /**

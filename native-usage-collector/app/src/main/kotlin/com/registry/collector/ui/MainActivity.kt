@@ -177,9 +177,10 @@ class MainActivity : AppCompatActivity() {
         }
         grantPermissionButton.visibility = if (hasPermission) View.GONE else View.VISIBLE
 
-        // Sync section — only show when signed in AND permission granted
-        syncSection.visibility = if (user != null && hasPermission) View.VISIBLE else View.GONE
-        if (user != null && hasPermission) {
+        // Sync section — only show and schedule when signed in AND permission granted
+        val isReady = CollectorScheduler.isSyncReady(this)
+        syncSection.visibility = if (isReady) View.VISIBLE else View.GONE
+        if (isReady) {
             val lastSync = syncPreferences.lastSuccessfulSync
             lastSyncText.text = if (lastSync > 0) {
                 val formatted = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
@@ -191,6 +192,9 @@ class MainActivity : AppCompatActivity() {
 
             // Schedule periodic worker (idempotent — KEEP policy)
             CollectorScheduler.schedule(this)
+        } else {
+            // Cancel periodic worker if auth or permission is revoked
+            CollectorScheduler.cancel(this)
         }
     }
 
@@ -224,21 +228,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun hasUsageStatsPermission(): Boolean {
-        val appOps = getSystemService(Context.APP_OPS_SERVICE) as AppOpsManager
-        val mode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            appOps.unsafeCheckOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                packageName
-            )
-        } else {
-            @Suppress("DEPRECATION")
-            appOps.checkOpNoThrow(
-                AppOpsManager.OPSTR_GET_USAGE_STATS,
-                Process.myUid(),
-                packageName
-            )
-        }
-        return mode == AppOpsManager.MODE_ALLOWED
+        return CollectorScheduler.hasUsageStatsPermission(this)
     }
 }

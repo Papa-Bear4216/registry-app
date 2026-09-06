@@ -112,6 +112,8 @@ export async function handleIngest(db: Firestore, req: Request, res: Response): 
         keepClockExpiresAt,
         status: 'keep',
         reusabilityCount: currentRuns + (body.payload.usageCount || 1),
+        lastObservedAt: now,
+        lastExecutedAt: now,
         updatedAt: now,
       });
     }

@@ -5,7 +5,11 @@ import {
   normalizeRegistryItem,
   parseStepsFromPayload,
   isSystemComponent,
+  SEEDED_ACTIVE_AUTOMATIONS,
+  SEEDED_DISCOVERED_PATTERNS,
+  APP_CATALOG,
 } from '../../src/lib/defaultAutomations';
+import { TaskCategory } from '../../src/types/enums';
 import { NativeModules, Alert, Linking } from 'react-native';
 
 describe('defaultAutomations', () => {
@@ -272,6 +276,34 @@ describe('defaultAutomations', () => {
       expect(isSystemComponent('Google Gemini')).toBe(false);
       expect(isSystemComponent('Claude AI')).toBe(false);
       expect(isSystemComponent('com.whatsapp')).toBe(false);
+    });
+  });
+
+  describe('TaskCategory enum consistency', () => {
+    const validCategories = new Set(Object.values(TaskCategory));
+
+    it('verifies all SEEDED_ACTIVE_AUTOMATIONS have valid TaskCategory values', () => {
+      SEEDED_ACTIVE_AUTOMATIONS.forEach((auto) => {
+        expect(auto.taskCategories).toBeDefined();
+        expect(auto.taskCategories.length).toBeGreaterThan(0);
+        auto.taskCategories.forEach((cat) => {
+          expect(validCategories.has(cat)).toBe(true);
+        });
+      });
+    });
+
+    it('verifies all SEEDED_DISCOVERED_PATTERNS have valid TaskCategory values', () => {
+      SEEDED_DISCOVERED_PATTERNS.forEach((pattern) => {
+        if (pattern.classifiedCategory) {
+          expect(validCategories.has(pattern.classifiedCategory)).toBe(true);
+        }
+      });
+    });
+
+    it('verifies all APP_CATALOG entries have valid TaskCategory values', () => {
+      Object.entries(APP_CATALOG).forEach(([pkg, meta]) => {
+        expect(validCategories.has(meta.category)).toBe(true);
+      });
     });
   });
 });

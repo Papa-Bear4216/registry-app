@@ -165,6 +165,8 @@ test('ingesting observation with registryItemId resets 14-day clock and incremen
   const updatedItem = db.registryItems['item-123'];
   expect(updatedItem.status).toBe('keep');
   expect(updatedItem.reusabilityCount).toBe(5); // 3 + 2
+  expect(typeof updatedItem.lastObservedAt).toBe('string');
+  expect(typeof updatedItem.lastExecutedAt).toBe('string');
   expect(typeof updatedItem.keepClockExpiresAt).toBe('string');
   expect(new Date(updatedItem.keepClockExpiresAt).getTime()).toBeGreaterThan(new Date('2026-01-01T00:00:00Z').getTime());
 });

@@ -372,7 +372,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
   'com.termux': {
     label: 'Termux Terminal',
     pkg: 'com.termux',
-    category: TaskCategory.Development,
+    category: TaskCategory.Coding,
     companionChain: [
       { label: 'Google Gemini Assistant', pkg: 'com.google.android.apps.bard' },
       { label: 'Discord Dev Channel', pkg: 'com.discord' },
@@ -443,7 +443,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
   'io.homeassistant.companion.android': {
     label: 'Home Assistant',
     pkg: 'io.homeassistant.companion.android',
-    category: TaskCategory.Utility,
+    category: TaskCategory.Utilities,
     companionChain: [
       { label: 'Google Calendar', pkg: 'com.google.android.calendar' },
     ],
@@ -451,7 +451,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
   'com.sec.android.daemonapp': {
     label: 'Samsung Weather',
     pkg: 'com.sec.android.daemonapp',
-    category: TaskCategory.Utility,
+    category: TaskCategory.Utilities,
     companionChain: [
       { label: 'Home Assistant', pkg: 'io.homeassistant.companion.android' },
       { label: 'Google Calendar', pkg: 'com.google.android.calendar' },
@@ -460,7 +460,7 @@ export const APP_CATALOG: Record<string, AppCatalogEntry> = {
   'com.android.vending': {
     label: 'Google Play Store',
     pkg: 'com.android.vending',
-    category: TaskCategory.Utility,
+    category: TaskCategory.Utilities,
     companionChain: [
       { label: 'ClickUp Tasks', pkg: 'co.mangotechnologies.clickup' },
     ],

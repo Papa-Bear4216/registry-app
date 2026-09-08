@@ -41,6 +41,7 @@ export enum AlertType {
 
 export enum CollectorType {
   PhoneUsage = 'phone_usage',
+  Shizuku = 'shizuku',
   Gmail = 'gmail',
   Manual = 'manual',
 }

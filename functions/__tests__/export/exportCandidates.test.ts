@@ -55,6 +55,17 @@ describe('handleExportCandidates', () => {
     expect(res.body).toEqual({ error: 'Missing or invalid Authorization header' });
   });
 
+  it('returns 405 when HTTP method is not GET', async () => {
+    const db = makeFakeDb();
+    const req: any = { method: 'POST', headers: { authorization: 'Bearer token-alice' }, query: {} };
+    const res = makeRes();
+
+    await handleExportCandidates(db, req, res);
+
+    expect(res.statusCode).toBe(405);
+    expect(res.body).toEqual({ error: 'Method Not Allowed' });
+  });
+
   it('exports candidates bounded to capacity and sorted by promotion score', async () => {
     const items = [
       {

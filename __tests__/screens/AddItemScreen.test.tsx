@@ -94,7 +94,13 @@ test('pressing Save writes the new item with createdBy set and navigates back', 
 
   expect(mockTransactionSetCalls).toHaveLength(1);
   expect(mockTransactionSetCalls[0][1]).toEqual(
-    expect.objectContaining({ name: 'Notion', cost: 10, createdBy: 'alice' })
+    expect.objectContaining({
+      name: 'Notion',
+      cost: 10,
+      createdBy: 'alice',
+      keepClockExpiresAt: expect.any(String),
+      lastObservedAt: expect.any(String),
+    })
   );
   expect(navigation.goBack).toHaveBeenCalled();
 });

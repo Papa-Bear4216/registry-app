@@ -86,6 +86,10 @@ export function AddItemScreen({ navigation, route }: Props) {
     const newItemRef = doc(registryItemsRef(db));
 
     await runTransaction(db, async (transaction) => {
+      const now = new Date();
+      const nowIso = now.toISOString();
+      const keepClockExpiresAt = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000).toISOString();
+
       transaction.set(newItemRef, {
         name,
         cost: parseFloat(cost) || 0,
@@ -101,7 +105,9 @@ export function AddItemScreen({ navigation, route }: Props) {
         capabilitySummary: null,
         sourceUrl: null,
         createdBy: user.uid,
-        createdAt: new Date().toISOString(),
+        createdAt: nowIso,
+        lastObservedAt: nowIso,
+        keepClockExpiresAt,
       } as any);
 
       if (resolveStagingItemId) {

@@ -9,6 +9,7 @@ import com.google.mlkit.genai.prompt.GenerativeModel
 enum class AiCoreState {
     AVAILABLE,
     DOWNLOADABLE,
+    DOWNLOADING,
     UNAVAILABLE,
 }
 
@@ -17,6 +18,7 @@ enum class AiCoreState {
  *
  * Spec section 8: if unavailable, the entire Phase 3 feature is hidden.
  * If downloadable, guide user to complete model/AICore download via Play Store.
+ * If downloading, notify user that model download is in progress.
  */
 object AiCoreAvailability {
 
@@ -26,6 +28,7 @@ object AiCoreAvailability {
      * Checks detailed AICore status:
      * - AVAILABLE: Model is ready for on-device inference.
      * - DOWNLOADABLE: Model / AICore component is supported but needs download/update.
+     * - DOWNLOADING: Model / AICore component is actively downloading in background.
      * - UNAVAILABLE: Device cannot run on-device Gemini Nano.
      */
     suspend fun checkStatus(context: Context): AiCoreState {
@@ -36,6 +39,7 @@ object AiCoreAvailability {
             when (status) {
                 FeatureStatus.AVAILABLE -> AiCoreState.AVAILABLE
                 FeatureStatus.DOWNLOADABLE -> AiCoreState.DOWNLOADABLE
+                FeatureStatus.DOWNLOADING -> AiCoreState.DOWNLOADING
                 else -> AiCoreState.UNAVAILABLE
             }
         } catch (e: Exception) {

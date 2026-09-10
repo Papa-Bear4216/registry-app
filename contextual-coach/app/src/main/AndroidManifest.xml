@@ -8,6 +8,9 @@
     <!-- Foreground service for accessibility monitoring awareness indicator -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
 
+    <!-- Required for posting notifications on Android 13+ (API 33+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- Network for Firestore sync (ranking cache) -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

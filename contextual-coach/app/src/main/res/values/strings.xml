@@ -22,6 +22,8 @@
     <string name="not_supported_message">Registry Coach requires on-device AI capabilities that are not available on this device.</string>
     <string name="aicore_downloadable_title">Gemini Nano Setup Required</string>
     <string name="aicore_downloadable_message">Your device supports on-device Gemini Nano, but Google AICore or the model is still downloading or updating. Please ensure AICore is updated in Google Play Store, then reopen Registry Coach.</string>
+    <string name="aicore_downloading_title">Downloading Gemini Nano</string>
+    <string name="aicore_downloading_message">The required on-device AI model is currently downloading in the background via Google AICore. Registry Coach will activate automatically once download completes.</string>
     <string name="open_play_store">Open Google Play Store</string>
     <string name="sign_in">Sign In</string>
 </resources>

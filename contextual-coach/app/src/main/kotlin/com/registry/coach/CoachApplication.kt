@@ -30,6 +30,11 @@ class CoachApplication : Application() {
         FirebaseApp.initializeApp(this)
 
         // Check AICore availability at startup.
+        refreshAiCoreState()
+    }
+
+    /** Re-checks AICore status (e.g. on return from Play Store or during download). */
+    fun refreshAiCoreState() {
         MainScope().launch {
             val status = AiCoreAvailability.checkStatus(this@CoachApplication)
             _aiCoreState.value = status

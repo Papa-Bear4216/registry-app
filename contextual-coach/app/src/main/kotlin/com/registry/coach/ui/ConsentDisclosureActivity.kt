@@ -1,11 +1,15 @@
 package com.registry.coach.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.registry.coach.CoachApplication
@@ -43,6 +47,7 @@ class ConsentDisclosureActivity : AppCompatActivity() {
                 when (state) {
                     AiCoreState.AVAILABLE -> showDisclosure()
                     AiCoreState.DOWNLOADABLE -> showDownloadable()
+                    AiCoreState.DOWNLOADING -> showDownloading()
                     AiCoreState.UNAVAILABLE -> showNotSupported()
                 }
             }
@@ -51,6 +56,7 @@ class ConsentDisclosureActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        (application as CoachApplication).refreshAiCoreState()
         updatePermissionStatus()
     }
 
@@ -82,6 +88,30 @@ class ConsentDisclosureActivity : AppCompatActivity() {
                     startActivity(intent)
                 }
             }
+        })
+
+        setContentView(layout)
+    }
+
+    private fun showDownloading() {
+        val padding = (24 * resources.displayMetrics.density).toInt()
+        val layout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(padding, padding * 2, padding, padding)
+        }
+
+        layout.addView(TextView(this).apply {
+            text = getString(R.string.aicore_downloading_title)
+            textSize = 24f
+            setPadding(0, 0, 0, padding)
+        })
+        layout.addView(TextView(this).apply {
+            text = getString(R.string.aicore_downloading_message)
+            textSize = 16f
+            setPadding(0, 0, 0, padding)
+        })
+        layout.addView(ProgressBar(this).apply {
+            isIndeterminate = true
         })
 
         setContentView(layout)
@@ -196,6 +226,12 @@ class ConsentDisclosureActivity : AppCompatActivity() {
 
     private fun updatePermissionStatus() {
         if (!::accessibilityStatus.isInitialized) return
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 101)
+            }
+        }
 
         val hasAccessibility = AccessibilitySettingsHelper.isAccessibilityServiceEnabled(this)
         val hasOverlay = Settings.canDrawOverlays(this)

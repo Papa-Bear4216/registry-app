@@ -104,7 +104,8 @@ describe('handleExportCandidates', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body.capacity).toBe(1);
-    expect(res.body.totalCandidates).toBe(1);
+    expect(res.body.totalCandidates).toBe(2);
+    expect(res.body.returned).toBe(1);
     expect(res.body.candidates).toHaveLength(1);
     // Highest candidate score should be first
     expect(res.body.candidates[0].id).toBe('c2');

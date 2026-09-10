@@ -15,7 +15,7 @@ export async function handleExportCandidates(
   req: Request,
   res: Response
 ): Promise<void> {
-  if (req.method && req.method.toUpperCase() !== 'GET') {
+  if ((req.method || 'GET').toUpperCase() !== 'GET') {
     res.status(405).json({ error: 'Method Not Allowed' });
     return;
   }

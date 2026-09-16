@@ -52,7 +52,16 @@ function item(overrides: Partial<RegistryItem>): RegistryItem {
 
 const fixtures: RegistryItem[] = [
   item({ name: 'Netflix', status: ItemStatus.Keep, kind: ItemKind.Subscription }),
-  item({ name: 'Notion', status: ItemStatus.Review, kind: ItemKind.App, suggestedAction: 'Create quick note' }),
+  item({
+    name: 'Notion',
+    status: ItemStatus.Review,
+    kind: ItemKind.App,
+    suggestedAction: {
+      type: 'intent',
+      payload: 'Create quick note',
+      estimatedSecondsSaved: 30,
+    },
+  }),
   item({ name: 'GitHub Copilot', status: ItemStatus.Cut, kind: ItemKind.DevTool }),
 ];
 

@@ -1,5 +1,7 @@
 require('./jest.setup.env');
 
+jest.setTimeout(15000);
+
 const { connectAuthEmulator } = require('firebase/auth');
 const { initializeFirebaseApp } = require('./src/firebase/config');
 

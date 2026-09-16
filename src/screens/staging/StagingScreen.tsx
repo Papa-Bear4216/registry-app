@@ -69,6 +69,7 @@ export function StagingScreen({ navigation }: Props) {
         const { db } = initializeFirebaseApp();
         const newItemRef = doc(registryItemsRef(db));
         await setDoc(newItemRef, {
+          id: newItemRef.id,
           name: workflowTitle,
           cost: 0,
           billingCycle: BillingCycle.Monthly,

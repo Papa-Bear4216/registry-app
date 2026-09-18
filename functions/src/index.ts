@@ -11,6 +11,7 @@ import { aiRank } from './ai/aiRank';
 import { lifecycleSweep } from './scheduled/lifecycleSweep';
 
 import { handleExportCandidates } from './export/exportCandidates';
+import { onWorkflowSuggestionCreated } from './ingest/workflowSuggestionIngest';
 
 admin.initializeApp();
 
@@ -27,3 +28,4 @@ export { gmailScan };
 export { dormancyCheck, deadMoneyAlert, weeklyDigest };
 export { aiSuggest, aiRank };
 export { lifecycleSweep };
+export { onWorkflowSuggestionCreated };

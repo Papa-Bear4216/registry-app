@@ -37,6 +37,11 @@ export async function classifyStagingItem(genai: GoogleGenAI, stagingItem: Pick<
 export async function processStagingItem(genai: GoogleGenAI, db: Firestore, doc: DocumentSnapshot): Promise<void> {
   const data = doc.data() as StagingItem;
 
+  // On-device Gemini Nano workflows from Gut-Instinct are pre-classified and sandboxed
+  if (data.sourceId === 'gut_instinct_nano' && data.classifiedAt) {
+    return;
+  }
+
   let suggestedMatch: string | null = null;
   let suggestionConfidence: string | null = null;
 

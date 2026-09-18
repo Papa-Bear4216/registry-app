@@ -1,5 +1,14 @@
 import { CollectorType, MatchConfidence } from './enums';
 
+export interface WorkflowStep {
+  id?: string;
+  order: number;
+  label: string;
+  target: string;
+  type?: 'app_launch' | 'intent' | 'deep_link' | 'script';
+  delayMs?: number;
+}
+
 export interface StagingItem {
   id: string;
   rawLabel: string;
@@ -21,6 +30,14 @@ export interface StagingItem {
   classifiedConfidence: number | null;
   classifiedDescription: string | null;
   createdBy: string;
+  // Discovered on-device workflow fields (from Gemini Nano / Gut-Instinct)
+  workflowTitle?: string;
+  sourceSuggestionId?: string;
+  triggerDescription?: string;
+  actionType?: 'intent' | 'deep_link' | 'script' | 'app_launch' | 'multi_step';
+  actionPayload?: string;
+  estimatedSecondsSaved?: number;
+  steps?: WorkflowStep[];
 }
 
 export interface DeviceSource {

@@ -48,5 +48,20 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource);
       allow update: if isOwner(resource) && isOwnerOnCreate();
     }
+    match /workflowSuggestions/{suggestionId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
+    match /workflows/{workflowId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if isOwner(resource) && isOwnerOnCreate();
+    }
+    match /workflowRuns/{runId} {
+      allow create: if isOwnerOnCreate();
+      allow read, delete: if isOwner(resource);
+      allow update: if false;
+    }
   }
 }

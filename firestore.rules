@@ -63,5 +63,19 @@ service cloud.firestore {
       allow read, delete: if isOwner(resource);
       allow update: if false;
     }
+
+    // 2nd Helpings (Oakridge Smokehouse Cafeteria Manager)
+    match /second_helpings_users/{userId} {
+      allow read, write: if true;
+    }
+    match /second_helpings_menu/{menuId} {
+      allow read, write: if true;
+    }
+    match /second_helpings_catalog/{catalogId} {
+      allow read, write: if true;
+    }
+    match /second_helpings_audit/{auditId} {
+      allow read, write: if true;
+    }
   }
 }

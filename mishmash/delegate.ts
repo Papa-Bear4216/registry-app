@@ -157,9 +157,13 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
     let actionPayload = (payload.actionPayload || {}) as Record<string, unknown>;
     let summary = String(payload.summary || "");
 
-    // If patterns provided, auto-rank and pick top candidate
-    if (!candidateId && payload.patterns) {
-      const ranked = rankSuppliedCandidates(payload);
+    // If patterns, events, or candidates provided, auto-rank and pick top candidate
+    if (!candidateId && (payload.patterns || payload.events || payload.candidates)) {
+      const rankInput =
+        payload.patterns && typeof payload.patterns === "object" && !Array.isArray(payload.patterns)
+          ? (payload.patterns as Record<string, unknown>)
+          : payload;
+      const ranked = rankSuppliedCandidates(rankInput);
       if (isRankError(ranked)) return { status: 400, body: { error: ranked.error } };
       const top = ranked.order[0];
       if (!top) {
@@ -176,7 +180,7 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
     }
 
     if (!candidateId) {
-      return { status: 400, body: { error: "speculate requires candidateId or patterns" } };
+      return { status: 400, body: { error: "speculate requires candidateId, patterns, or events" } };
     }
 
     const ttlMs = typeof payload.ttlMs === "number" ? payload.ttlMs : DEFAULT_TTL_MS;
@@ -211,6 +215,7 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
       body: envelope(record, {
         node: NODE,
         action: "release",
+        status: res.proposal.status,
         proposal: res.proposal,
       }),
     };

@@ -1,7 +1,111 @@
 import { createServer, type IncomingMessage, type ServerResponse } from "node:http";
-import { isRankError, rankSuppliedCandidates } from "../../pattern-analyzer/src/mishmash-rank.ts";
+import { randomUUID, randomBytes } from "node:crypto";
+import { isRankError, rankSuppliedCandidates } from "../../pattern-analyzer/src/mishmash-rank";
 
 const NODE = "registry-app";
+
+export interface SpeculativeProposal {
+  proposalId: string;
+  candidateId: string;
+  actionPayload: Record<string, unknown>;
+  summary: string;
+  createdAt: number;
+  expiresAt: number;
+  approvalNonce: string;
+  status: "dry_run_ready" | "released";
+}
+
+const MAX_CACHE_SIZE = 100;
+const DEFAULT_TTL_MS = 60_000;
+
+export class DryRunCache {
+  private cache = new Map<string, SpeculativeProposal>();
+
+  private prune() {
+    const now = Date.now();
+    for (const [id, item] of this.cache.entries()) {
+      if (item.expiresAt <= now) {
+        this.cache.delete(id);
+      }
+    }
+    while (this.cache.size > MAX_CACHE_SIZE) {
+      const oldestKey = this.cache.keys().next().value;
+      if (oldestKey) this.cache.delete(oldestKey);
+      else break;
+    }
+  }
+
+  set(
+    candidateId: string,
+    actionPayload: Record<string, unknown>,
+    summary: string,
+    ttlMs: number = DEFAULT_TTL_MS
+  ): SpeculativeProposal {
+    this.prune();
+    const now = Date.now();
+    const proposal: SpeculativeProposal = {
+      proposalId: `prop_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
+      candidateId,
+      actionPayload,
+      summary,
+      createdAt: now,
+      expiresAt: now + (ttlMs > 0 ? ttlMs : DEFAULT_TTL_MS),
+      approvalNonce: randomBytes(16).toString("hex"),
+      status: "dry_run_ready",
+    };
+    this.cache.set(proposal.proposalId, proposal);
+    return proposal;
+  }
+
+  get(proposalId: string): SpeculativeProposal | null {
+    this.prune();
+    const item = this.cache.get(proposalId);
+    if (!item) return null;
+    if (item.expiresAt <= Date.now()) {
+      this.cache.delete(proposalId);
+      return null;
+    }
+    return item;
+  }
+
+  release(
+    proposalId: string,
+    nonce: string
+  ): { ok: true; proposal: SpeculativeProposal } | { ok: false; error: string; code: number } {
+    this.prune();
+    const item = this.cache.get(proposalId);
+    if (!item || item.expiresAt <= Date.now()) {
+      if (item) this.cache.delete(proposalId);
+      return { ok: false, error: "proposal expired or not found", code: 404 };
+    }
+    if (item.approvalNonce !== nonce) {
+      return { ok: false, error: "invalid approval nonce", code: 403 };
+    }
+    this.cache.delete(proposalId);
+    item.status = "released";
+    return { ok: true, proposal: item };
+  }
+
+  status() {
+    this.prune();
+    return {
+      size: this.cache.size,
+      maxSize: MAX_CACHE_SIZE,
+      proposals: Array.from(this.cache.values()).map((p) => ({
+        proposalId: p.proposalId,
+        candidateId: p.candidateId,
+        expiresAt: new Date(p.expiresAt).toISOString(),
+        status: p.status,
+      })),
+    };
+  }
+
+  clear() {
+    this.cache.clear();
+  }
+}
+
+export const dryRunCache = new DryRunCache();
 
 function isLoopback(addr: string | undefined): boolean {
   return addr === "127.0.0.1" || addr === "::1" || addr === "::ffff:127.0.0.1";
@@ -43,7 +147,81 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
       }),
     };
   }
-  return { status: 400, body: { error: "registry-app accepts ping or stage" } };
+  if (record.action === "speculate") {
+    const payload = (record.payload ?? {}) as Record<string, unknown>;
+    let candidateId = String(payload.candidateId || "");
+    let actionPayload = (payload.actionPayload || {}) as Record<string, unknown>;
+    let summary = String(payload.summary || "");
+
+    // If patterns provided, auto-rank and pick top candidate
+    if (!candidateId && payload.patterns) {
+      const ranked = rankSuppliedCandidates(payload);
+      if (isRankError(ranked)) return { status: 400, body: { error: ranked.error } };
+      const top = ranked.order[0];
+      if (!top) {
+        return { status: 400, body: { error: "no patterns available to speculate" } };
+      }
+      candidateId = top.id;
+      summary = `Auto-speculation for top pattern: ${top.id}`;
+      actionPayload = {
+        target: "agent-mesh-mcp",
+        capability: "mesh",
+        action: "skills",
+        patternId: top.id,
+      };
+    }
+
+    if (!candidateId) {
+      return { status: 400, body: { error: "speculate requires candidateId or patterns" } };
+    }
+
+    const ttlMs = typeof payload.ttlMs === "number" ? payload.ttlMs : DEFAULT_TTL_MS;
+    const proposal = dryRunCache.set(candidateId, actionPayload, summary, ttlMs);
+    return {
+      status: 200,
+      body: envelope(record, {
+        node: NODE,
+        action: "speculate",
+        proposalId: proposal.proposalId,
+        candidateId: proposal.candidateId,
+        status: proposal.status,
+        expiresAt: new Date(proposal.expiresAt).toISOString(),
+        approvalNonce: proposal.approvalNonce,
+        summary: proposal.summary,
+      }),
+    };
+  }
+  if (record.action === "release") {
+    const payload = (record.payload ?? {}) as Record<string, unknown>;
+    const proposalId = String(payload.proposalId || "");
+    const nonce = String(payload.nonce || payload.approvalNonce || "");
+    if (!proposalId || !nonce) {
+      return { status: 400, body: { error: "release requires proposalId and nonce" } };
+    }
+    const res = dryRunCache.release(proposalId, nonce);
+    if (!res.ok) {
+      return { status: res.code, body: { error: res.error } };
+    }
+    return {
+      status: 200,
+      body: envelope(record, {
+        node: NODE,
+        action: "release",
+        proposal: res.proposal,
+      }),
+    };
+  }
+  if (record.action === "cache_status") {
+    return {
+      status: 200,
+      body: envelope(record, {
+        node: NODE,
+        action: "cache_status",
+        ...dryRunCache.status(),
+      }),
+    };
+  }
+  return { status: 400, body: { error: "registry-app accepts ping, stage, speculate, release, or cache_status" } };
 }
 
 function readBody(req: IncomingMessage, limit: number): Promise<string> {

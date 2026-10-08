@@ -100,6 +100,10 @@ export class DryRunCache {
     };
   }
 
+  clearProposal(proposalId: string): boolean {
+    return this.cache.delete(proposalId);
+  }
+
   clear() {
     this.cache.clear();
   }
@@ -221,7 +225,21 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
       }),
     };
   }
-  return { status: 400, body: { error: "registry-app accepts ping, stage, speculate, release, or cache_status" } };
+  if (record.action === "reject") {
+    const payload = (record.payload ?? {}) as Record<string, unknown>;
+    const proposalId = String(payload.proposalId || "");
+    const deleted = proposalId ? dryRunCache.clearProposal(proposalId) : false;
+    return {
+      status: 200,
+      body: envelope(record, {
+        node: NODE,
+        action: "reject",
+        proposalId,
+        revoked: deleted,
+      }),
+    };
+  }
+  return { status: 400, body: { error: "registry-app accepts ping, stage, speculate, release, reject, or cache_status" } };
 }
 
 function readBody(req: IncomingMessage, limit: number): Promise<string> {

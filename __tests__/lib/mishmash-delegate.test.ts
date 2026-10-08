@@ -135,4 +135,46 @@ describe("registry-app mishmash delegate & dryRunCache", () => {
     expect(result.candidateId).toBe("pat_high");
     expect(result.summary).toContain("pat_high");
   });
+
+  it("revokes proposal on reject and prevents later approval", () => {
+    const specRes = handleRegistryDelegate({
+      v: 1,
+      id: "env-9",
+      from: "gateway",
+      to: "registry-app",
+      capability: "staging",
+      action: "speculate",
+      payload: {
+        candidateId: "pat_danger",
+        actionPayload: { tool: "dangerous_op" },
+        summary: "Dangerous operation",
+      },
+    });
+    const { proposalId, approvalNonce } = specRes.body.result as any;
+
+    // Reject the proposal
+    const rejRes = handleRegistryDelegate({
+      v: 1,
+      id: "env-10",
+      from: "gateway",
+      to: "registry-app",
+      capability: "staging",
+      action: "reject",
+      payload: { proposalId, reason: "User denied" },
+    });
+    expect(rejRes.status).toBe(200);
+    expect((rejRes.body.result as any).revoked).toBe(true);
+
+    // Attempting to release now fails with 404
+    const relRes = handleRegistryDelegate({
+      v: 1,
+      id: "env-11",
+      from: "gateway",
+      to: "registry-app",
+      capability: "staging",
+      action: "release",
+      payload: { proposalId, nonce: approvalNonce },
+    });
+    expect(relRes.status).toBe(404);
+  });
 });

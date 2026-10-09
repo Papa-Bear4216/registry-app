@@ -13,7 +13,11 @@ export interface SpeculativeProposal {
   expiresAt: number;
   approvalNonce: string;
   status: "dry_run_ready" | "released";
+  riskLevel?: "low" | "medium" | "high";
 }
+
+/** Caller-supplied proposal ids (the daemon's) must be plain identifiers. */
+const PROPOSAL_ID_PATTERN = /^[A-Za-z0-9_.:-]{1,128}$/;
 
 const MAX_CACHE_SIZE = 100;
 const DEFAULT_TTL_MS = 60_000;
@@ -39,12 +43,13 @@ export class DryRunCache {
     candidateId: string,
     actionPayload: Record<string, unknown>,
     summary: string,
-    ttlMs: number = DEFAULT_TTL_MS
+    ttlMs: number = DEFAULT_TTL_MS,
+    options: { proposalId?: string; riskLevel?: "low" | "medium" | "high" } = {}
   ): SpeculativeProposal {
     this.prune();
     const now = Date.now();
     const proposal: SpeculativeProposal = {
-      proposalId: `prop_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
+      proposalId: options.proposalId ?? `prop_${randomUUID().replace(/-/g, "").slice(0, 16)}`,
       candidateId,
       actionPayload,
       summary,
@@ -52,6 +57,7 @@ export class DryRunCache {
       expiresAt: now + (ttlMs > 0 ? ttlMs : DEFAULT_TTL_MS),
       approvalNonce: randomBytes(16).toString("hex"),
       status: "dry_run_ready",
+      ...(options.riskLevel ? { riskLevel: options.riskLevel } : {}),
     };
     this.cache.set(proposal.proposalId, proposal);
     return proposal;
@@ -100,6 +106,33 @@ export class DryRunCache {
     };
   }
 
+  /**
+   * Live, unreleased proposals INCLUDING their approval nonces, for the gateway's pending list.
+   * `status()` deliberately omits nonces; only the loopback-guarded pending_proposals action uses this.
+   */
+  listPending(): Array<{
+    proposalId: string;
+    candidateId: string;
+    summary: string;
+    riskLevel?: "low" | "medium" | "high";
+    approvalNonce: string;
+    expiresAt: number;
+    actionPayload: Record<string, unknown>;
+  }> {
+    this.prune();
+    return Array.from(this.cache.values())
+      .filter((p) => p.status === "dry_run_ready")
+      .map((p) => ({
+        proposalId: p.proposalId,
+        candidateId: p.candidateId,
+        summary: p.summary,
+        ...(p.riskLevel ? { riskLevel: p.riskLevel } : {}),
+        approvalNonce: p.approvalNonce,
+        expiresAt: p.expiresAt,
+        actionPayload: p.actionPayload,
+      }));
+  }
+
   clearProposal(proposalId: string): boolean {
     return this.cache.delete(proposalId);
   }
@@ -113,6 +146,17 @@ export const dryRunCache = new DryRunCache();
 
 function isLoopback(addr: string | undefined): boolean {
   return addr === "127.0.0.1" || addr === "::1" || addr === "::ffff:127.0.0.1";
+}
+
+export function isTrustedLocalRequest(
+  req: Pick<IncomingMessage, "headers">,
+  address: ReturnType<ReturnType<typeof createServer>["address"]>
+): boolean {
+  if (req.headers.origin !== undefined) return false;
+  const port = address && typeof address === "object" ? address.port : undefined;
+  if (port === undefined) return false;
+  const host = String(req.headers.host ?? "").toLowerCase();
+  return host === `127.0.0.1:${port}` || host === `localhost:${port}` || host === `[::1]:${port}`;
 }
 
 function envelope(body: Record<string, unknown>, result: Record<string, unknown>) {
@@ -184,7 +228,23 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
     }
 
     const ttlMs = typeof payload.ttlMs === "number" ? payload.ttlMs : DEFAULT_TTL_MS;
-    const proposal = dryRunCache.set(candidateId, actionPayload, summary, ttlMs);
+
+    // The daemon keys its own proposals by id. When it supplies one, speculating is idempotent: a live entry
+    // is returned as is (same nonce), so polling the pending list never rotates a nonce under the phone.
+    let suppliedId: string | undefined;
+    if (payload.proposalId !== undefined) {
+      if (typeof payload.proposalId !== "string" || !PROPOSAL_ID_PATTERN.test(payload.proposalId)) {
+        return { status: 400, body: { error: "proposalId must match [A-Za-z0-9_.:-]{1,128}" } };
+      }
+      suppliedId = payload.proposalId;
+    }
+    const riskLevel =
+      payload.riskLevel === "low" || payload.riskLevel === "medium" || payload.riskLevel === "high"
+        ? payload.riskLevel
+        : undefined;
+    const proposal =
+      (suppliedId ? dryRunCache.get(suppliedId) : null) ??
+      dryRunCache.set(candidateId, actionPayload, summary, ttlMs, { proposalId: suppliedId, riskLevel });
     return {
       status: 200,
       body: envelope(record, {
@@ -220,6 +280,16 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
       }),
     };
   }
+  if (record.action === "pending_proposals") {
+    return {
+      status: 200,
+      body: envelope(record, {
+        node: NODE,
+        action: "pending_proposals",
+        proposals: dryRunCache.listPending(),
+      }),
+    };
+  }
   if (record.action === "cache_status") {
     return {
       status: 200,
@@ -244,7 +314,7 @@ export function handleRegistryDelegate(body: unknown): { status: number; body: R
       }),
     };
   }
-  return { status: 400, body: { error: "registry-app accepts ping, stage, speculate, release, reject, or cache_status" } };
+  return { status: 400, body: { error: "registry-app accepts ping, stage, speculate, release, reject, pending_proposals, or cache_status" } };
 }
 
 function readBody(req: IncomingMessage, limit: number): Promise<string> {
@@ -287,6 +357,11 @@ export function startRegistryDelegate(port: number) {
     }
     if (!isLoopback(req.socket.remoteAddress)) {
       send(res, 403, { error: "delegate is only accepted from this PC" });
+      return;
+    }
+    // pending_proposals returns approval nonces, so refuse browser-origin requests and DNS-rebound hosts too.
+    if (!isTrustedLocalRequest(req, server.address())) {
+      send(res, 403, { error: "delegate rejects browser-origin and non-loopback host requests" });
       return;
     }
     try {

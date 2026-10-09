@@ -1,4 +1,9 @@
-import { handleRegistryDelegate, dryRunCache } from "../../mishmash/delegate";
+import {
+  handleRegistryDelegate,
+  dryRunCache,
+  isTrustedLocalRequest,
+  startRegistryDelegate,
+} from "../../mishmash/delegate";
 
 describe("registry-app mishmash delegate & dryRunCache", () => {
   beforeEach(() => {
@@ -176,5 +181,123 @@ describe("registry-app mishmash delegate & dryRunCache", () => {
       payload: { proposalId, nonce: approvalNonce },
     });
     expect(relRes.status).toBe(404);
+  });
+
+  const env = (action: string, payload: Record<string, unknown>) => ({
+    v: 1,
+    id: `env-${action}`,
+    from: "gateway",
+    to: "registry-app",
+    capability: "staging",
+    action,
+    payload,
+  });
+
+  it("keys a proposal by the caller's id and is idempotent for a live entry", () => {
+    const first = handleRegistryDelegate(
+      env("speculate", { proposalId: "policy_abc123", candidateId: "pol", summary: "Run probe", riskLevel: "low" })
+    );
+    expect(first.status).toBe(200);
+    const a = (first.body.result as any);
+    expect(a.proposalId).toBe("policy_abc123");
+
+    // polling again must not rotate the nonce under the phone
+    const second = handleRegistryDelegate(
+      env("speculate", { proposalId: "policy_abc123", candidateId: "pol", summary: "Run probe" })
+    );
+    expect((second.body.result as any).approvalNonce).toBe(a.approvalNonce);
+
+    // the daemon's id releases exactly once
+    const released = handleRegistryDelegate(
+      env("release", { proposalId: "policy_abc123", nonce: a.approvalNonce })
+    );
+    expect(released.status).toBe(200);
+    const replay = handleRegistryDelegate(
+      env("release", { proposalId: "policy_abc123", nonce: a.approvalNonce })
+    );
+    expect(replay.status).toBe(404);
+  });
+
+  it("rejects malformed caller-supplied proposal ids", () => {
+    for (const bad of ["", "has space", "../etc", "x".repeat(129), "a\nb", 42, {}]) {
+      const res = handleRegistryDelegate(env("speculate", { proposalId: bad, candidateId: "pol" }));
+      expect(res.status).toBe(400);
+    }
+    expect(dryRunCache.status().size).toBe(0);
+  });
+
+  it("pending_proposals lists live proposals with nonces; cache_status never does", () => {
+    const made = handleRegistryDelegate(
+      env("speculate", { proposalId: "policy_p1", candidateId: "pol", summary: "S", riskLevel: "high", actionPayload: { cmd: "x" } })
+    );
+    const nonce = (made.body.result as any).approvalNonce;
+    const pending = handleRegistryDelegate(env("pending_proposals", {}));
+    expect(pending.status).toBe(200);
+    const list = (pending.body.result as any).proposals;
+    expect(list).toHaveLength(1);
+    expect(list[0]).toMatchObject({
+      proposalId: "policy_p1",
+      approvalNonce: nonce,
+      riskLevel: "high",
+      actionPayload: { cmd: "x" },
+    });
+    expect(typeof list[0].expiresAt).toBe("number");
+
+    expect(JSON.stringify(handleRegistryDelegate(env("cache_status", {})).body)).not.toContain(nonce);
+
+    // released proposals disappear from the pending list
+    handleRegistryDelegate(env("release", { proposalId: "policy_p1", nonce }));
+    expect((handleRegistryDelegate(env("pending_proposals", {})).body.result as any).proposals).toHaveLength(0);
+  });
+
+  it("expired proposals are not listed as pending", () => {
+    handleRegistryDelegate(env("speculate", { proposalId: "policy_old", candidateId: "pol", ttlMs: 1 }));
+    const realNow = Date.now;
+    Date.now = () => realNow() + 5_000;
+    try {
+      expect((handleRegistryDelegate(env("pending_proposals", {})).body.result as any).proposals).toHaveLength(0);
+    } finally {
+      Date.now = realNow;
+    }
+  });
+
+  it("trusts only same-host requests without an Origin header", () => {
+    const addr = { port: 39403, address: "127.0.0.1", family: "IPv4" } as any;
+    const ok = (headers: Record<string, string>) => isTrustedLocalRequest({ headers } as any, addr);
+    expect(ok({ host: "127.0.0.1:39403" })).toBe(true);
+    expect(ok({ host: "localhost:39403" })).toBe(true);
+    expect(ok({ host: "[::1]:39403" })).toBe(true);
+    expect(ok({ host: "127.0.0.1:39403", origin: "https://evil.example" })).toBe(false);
+    expect(ok({ host: "rebound.attacker.example:39403" })).toBe(false);
+    expect(ok({ host: "127.0.0.1:1" })).toBe(false);
+    expect(ok({})).toBe(false);
+  });
+
+  it("the HTTP server refuses browser-origin and rebound-host requests but serves a plain local call", async () => {
+    const server = await startRegistryDelegate(0);
+    const port = (server.address() as any).port as number;
+    const url = `http://127.0.0.1:${port}/mishmash/delegate`;
+    const body = JSON.stringify(env("pending_proposals", {}));
+    try {
+      const plain = await fetch(url, { method: "POST", body, headers: { "Content-Type": "application/json" } });
+      expect(plain.status).toBe(200);
+      const http = await import("node:http");
+      const status = (headers: Record<string, string>) =>
+        new Promise<number>((resolve, reject) => {
+          const r = http.request(
+            { host: "127.0.0.1", port, path: "/mishmash/delegate", method: "POST", headers: { "Content-Type": "application/json", ...headers } },
+            (res) => {
+              res.resume();
+              resolve(res.statusCode ?? 0);
+            }
+          );
+          r.on("error", reject);
+          r.end(body);
+        });
+      expect(await status({ Origin: "https://evil.example" })).toBe(403);
+      expect(await status({ Host: "rebound.attacker.example" })).toBe(403);
+    } finally {
+      await new Promise<void>((r) => server.close(() => r()));
+    }
   });
 });

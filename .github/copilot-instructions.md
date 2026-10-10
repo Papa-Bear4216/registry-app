@@ -1,0 +1,3 @@
+# Copilot Instructions — registry-app
+Always read and strictly adhere to `C:\Users\micha\AGENTS.md` and memory at `C:\Users\micha\.claude\projects\C--Users-micha\memory\MEMORY.md`.
+Default to Section 6 of AGENTS.md (Autonomous End-to-End Execution Protocol): surgical implementation, 0 TypeScript errors invariant (`npx tsc --noEmit`), triad advisor critique, structured git commit without secrets or keystores.
